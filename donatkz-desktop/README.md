@@ -221,6 +221,6 @@ colorlog            - Цветные логи
 
 ---
 
-**Автор:** @wezoll  
-**GitHub:** [donatkz](https://github.com/wezoll/donatkz)  
+**Авторы:** @wezoll  , @Aspan1337
+**GitHub:** [donatkz](https://github.com/wezoll/DonatKZ/tree/main/donatkz-desktop)  
 **Поддержка:** Открыты Issues & Pull Requests 🎉
