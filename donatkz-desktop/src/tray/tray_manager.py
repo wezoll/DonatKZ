@@ -1,0 +1,421 @@
+"""
+System Tray Manager
+
+Управление иконкой в системном трее Windows с контекстным меню
+и интеграцией с главным окном приложения.
+"""
+import tkinter as tk
+import logging
+import threading
+from typing import Optional, Callable, Dict, Any
+from pathlib import Path
+
+try:
+    import pystray
+    from pystray import MenuItem as item
+    from PIL import Image, ImageDraw
+    TRAY_AVAILABLE = True
+except ImportError:
+    TRAY_AVAILABLE = False
+    # Создаём заглушки для тестов
+    class MockImage:
+        @staticmethod
+        def new(*args, **kwargs):
+            return MockImage()
+        @staticmethod
+        def ellipse(*args, **kwargs):
+            pass
+        @staticmethod
+        def text(*args, **kwargs):
+            pass
+    Image = MockImage
+    ImageDraw = MockImage
+    logging.warning("System Tray недоступен. Установите pystray: pip install pystray pillow")
+
+logger = logging.getLogger(__name__)
+
+
+class TrayManager:
+    """
+    Менеджер системного трея
+    
+    Управляет:
+    - Иконкой в трее Windows
+    - Контекстным меню
+    - Показать/скрыть главное окно
+    - Статусом приложения
+    - Интеграцией с Phone Link
+    """
+    
+    def __init__(
+        self,
+        main_window,
+        on_show: Optional[Callable] = None,
+        on_hide: Optional[Callable] = None,
+        on_quit: Optional[Callable] = None
+    ):
+        """
+        Инициализация менеджера трея
+        
+        Args:
+            main_window: Главное окно приложения (может быть tk.Tk или DonatKZApp)
+            on_show: Callback при показе окна
+            on_hide: Callback при скрытии окна
+            on_quit: Callback при выходе
+        """
+        # Если это tk.Tk, сохраняем как есть, иначе пытаемся получить root
+        if hasattr(main_window, 'root'):
+            self.root_window = main_window.root
+            self.app_window = main_window
+        else:
+            self.root_window = main_window
+            self.app_window = main_window
+        
+        self.on_show = on_show
+        self.on_hide = on_hide
+        self.on_quit = on_quit
+        
+        # Состояние
+        self.is_running = False
+        self.icon = None
+        self.thread = None
+        
+        # Статус
+        self.app_status = "Неактивен"
+        self.phone_link_status = "Неизвестно"
+        self.listener_status = "Остановлен"
+        
+        # Иконки
+        self.icon_images = {}
+        self._create_icons()
+        
+        logger.info("TrayManager инициализирован")
+        logger.info(f"System Tray доступен: {TRAY_AVAILABLE}")
+    
+    def _create_icons(self):
+        """Создание иконок для трея"""
+        try:
+            # Размеры иконок
+            icon_size = (64, 64)
+            
+            # Зелёная иконка (активен)
+            green_icon = Image.new('RGBA', icon_size, (0, 0, 0, 0))
+            green_draw = ImageDraw.Draw(green_icon)
+            green_draw.ellipse([8, 8, 56, 56], fill=(0, 255, 0, 255))
+            green_draw.text((32, 32), "D", fill=(255, 255, 255, 255), anchor="mm")
+            self.icon_images["active"] = green_icon
+            
+            # Красная иконка (неактивен)
+            red_icon = Image.new('RGBA', icon_size, (0, 0, 0, 0))
+            red_draw = ImageDraw.Draw(red_icon)
+            red_draw.ellipse([8, 8, 56, 56], fill=(255, 0, 0, 255))
+            red_draw.text((32, 32), "D", fill=(255, 255, 255, 255), anchor="mm")
+            self.icon_images["inactive"] = red_icon
+            
+            # Жёлтая иконка (предупреждение)
+            yellow_icon = Image.new('RGBA', icon_size, (0, 0, 0, 0))
+            yellow_draw = ImageDraw.Draw(yellow_icon)
+            yellow_draw.ellipse([8, 8, 56, 56], fill=(255, 255, 0, 255))
+            yellow_draw.text((32, 32), "D", fill=(0, 0, 0, 255), anchor="mm")
+            self.icon_images["warning"] = yellow_icon
+            
+            # Синяя иконка (работает)
+            blue_icon = Image.new('RGBA', icon_size, (0, 0, 0, 0))
+            blue_draw = ImageDraw.Draw(blue_icon)
+            blue_draw.ellipse([8, 8, 56, 56], fill=(0, 0, 255, 255))
+            blue_draw.text((32, 32), "D", fill=(255, 255, 255, 255), anchor="mm")
+            self.icon_images["working"] = blue_icon
+            
+            logger.debug("Иконки для трея созданы")
+            
+        except Exception as e:
+            logger.exception(f"Ошибка создания иконок: {e}")
+            # Создаём простые иконки
+            self.icon_images = {
+                "active": Image.new('RGBA', (64, 64), (0, 255, 0, 255)),
+                "inactive": Image.new('RGBA', (64, 64), (255, 0, 0, 255)),
+                "warning": Image.new('RGBA', (64, 64), (255, 255, 0, 255)),
+                "working": Image.new('RGBA', (64, 64), (0, 0, 255, 255))
+            }
+    
+    def start(self):
+        """Запуск иконки в трее"""
+        if not TRAY_AVAILABLE:
+            logger.warning("System Tray недоступен")
+            return False
+        
+        if self.is_running:
+            logger.warning("Tray уже запущен")
+            return True
+        
+        try:
+            # Создаём меню
+            menu = self._create_menu()
+            
+            # Создаём иконку
+            self.icon = pystray.Icon(
+                "DonatKZ",
+                self.icon_images["inactive"],
+                "DonatKZ Desktop",
+                menu
+            )
+            
+            # Запускаем в отдельном потоке
+            self.thread = threading.Thread(
+                target=self._run_icon,
+                daemon=True,
+                name="TrayIcon"
+            )
+            self.thread.start()
+            
+            self.is_running = True
+            logger.info("✅ Иконка в трее запущена")
+            return True
+            
+        except Exception as e:
+            logger.exception(f"Ошибка запуска трея: {e}")
+            return False
+    
+    def stop(self):
+        """Остановка иконки в трее"""
+        if not self.is_running or not self.icon:
+            return
+        
+        try:
+            self.icon.stop()
+            self.is_running = False
+            logger.info("✅ Иконка в трее остановлена")
+        except Exception as e:
+            logger.exception(f"Ошибка остановки трея: {e}")
+    
+    def _run_icon(self):
+        """Запуск иконки в отдельном потоке"""
+        try:
+            self.icon.run()
+        except Exception as e:
+            logger.exception(f"Ошибка в потоке трея: {e}")
+    
+    def _create_menu(self):
+        """Создание контекстного меню"""
+        try:
+            menu = pystray.Menu(
+                # Показать/скрыть окно
+                item(
+                    "Показать окно",
+                    self._on_show_window,
+                    default=True
+                ),
+                item(
+                    "Скрыть окно",
+                    self._on_hide_window
+                ),
+                pystray.Menu.SEPARATOR,
+                
+                # Статус
+                item(
+                    f"Статус: {self.app_status}",
+                    None,
+                    enabled=False
+                ),
+                item(
+                    f"Phone Link: {self.phone_link_status}",
+                    None,
+                    enabled=False
+                ),
+                item(
+                    f"Слушатель: {self.listener_status}",
+                    None,
+                    enabled=False
+                ),
+                pystray.Menu.SEPARATOR,
+                
+                # Управление
+                item(
+                    "Запустить слушатель",
+                    self._on_start_listener
+                ),
+                item(
+                    "Остановить слушатель",
+                    self._on_stop_listener
+                ),
+                pystray.Menu.SEPARATOR,
+                
+                # Настройки
+                item(
+                    "Настройки",
+                    self._on_open_settings
+                ),
+                item(
+                    "Логи",
+                    self._on_open_logs
+                ),
+                pystray.Menu.SEPARATOR,
+                
+                # Выход
+                item(
+                    "Выход",
+                    self._on_quit
+                )
+            )
+            
+            return menu
+            
+        except Exception as e:
+            logger.exception(f"Ошибка создания меню: {e}")
+            return pystray.Menu(
+                item("Показать окно", self._on_show_window),
+                item("Выход", self._on_quit)
+            )
+    
+    def _on_show_window(self, icon=None, item=None):
+        """Обработка показа окна"""
+        try:
+            if self.on_show:
+                self.on_show()
+            else:
+                # Используем root_window напрямую
+                self.root_window.deiconify()
+                self.root_window.lift()
+                self.root_window.focus_force()
+            
+            logger.info("✅ Окно показано из трея")
+        except Exception as e:
+            logger.exception(f"Ошибка показа окна: {e}")
+    
+    def _on_hide_window(self, icon=None, item=None):
+        """Обработка скрытия окна"""
+        try:
+            if self.on_hide:
+                self.on_hide()
+            else:
+                # Используем root_window напрямую
+                self.root_window.withdraw()
+            
+            logger.info("✅ Окно скрыто в трей")
+        except Exception as e:
+            logger.exception(f"Ошибка скрытия окна: {e}")
+    
+    def _on_start_listener(self, icon=None, item=None):
+        """Обработка запуска слушателя"""
+        try:
+            if hasattr(self.app_window, 'notification_integration'):
+                self.app_window.notification_integration.start_listener(use_mock=False)
+                self.update_listener_status("Запущен")
+                logger.info("✅ Слушатель запущен из трея")
+        except Exception as e:
+            logger.exception(f"Ошибка запуска слушателя: {e}")
+    
+    def _on_stop_listener(self, icon=None, item=None):
+        """Обработка остановки слушателя"""
+        try:
+            if hasattr(self.app_window, 'notification_integration'):
+                self.app_window.notification_integration.stop_listener()
+                self.update_listener_status("Остановлен")
+                logger.info("✅ Слушатель остановлен из трея")
+        except Exception as e:
+            logger.exception(f"Ошибка остановки слушателя: {e}")
+    
+    def _on_open_settings(self, icon=None, item=None):
+        """Обработка открытия настроек"""
+        try:
+            if hasattr(self.app_window, 'notebook'):
+                self.app_window.notebook.select(1)  # Вкладка настроек
+                self._on_show_window()
+                logger.info("✅ Настройки открыты из трея")
+        except Exception as e:
+            logger.exception(f"Ошибка открытия настроек: {e}")
+    
+    def _on_open_logs(self, icon=None, item=None):
+        """Обработка открытия логов"""
+        try:
+            if hasattr(self.app_window, 'notebook'):
+                self.app_window.notebook.select(2)  # Вкладка логов
+                self._on_show_window()
+                logger.info("✅ Логи открыты из трея")
+        except Exception as e:
+            logger.exception(f"Ошибка открытия логов: {e}")
+    
+    def _on_quit(self, icon=None, item=None):
+        """Обработка выхода"""
+        try:
+            if self.on_quit:
+                self.on_quit()
+            else:
+                self.root_window.quit()
+            
+            logger.info("✅ Выход из приложения через трей")
+        except Exception as e:
+            logger.exception(f"Ошибка выхода: {e}")
+    
+    def update_status(self, status: str):
+        """
+        Обновление статуса приложения
+        
+        Args:
+            status: Новый статус
+        """
+        self.app_status = status
+        self._update_icon()
+        logger.debug(f"Статус обновлён: {status}")
+    
+    def update_phone_link_status(self, status: str):
+        """
+        Обновление статуса Phone Link
+        
+        Args:
+            status: Новый статус Phone Link
+        """
+        self.phone_link_status = status
+        self._update_icon()
+        logger.debug(f"Phone Link статус обновлён: {status}")
+    
+    def update_listener_status(self, status: str):
+        """
+        Обновление статуса слушателя
+        
+        Args:
+            status: Новый статус слушателя
+        """
+        self.listener_status = status
+        self._update_icon()
+        logger.debug(f"Слушатель статус обновлён: {status}")
+    
+    def _update_icon(self):
+        """Обновление иконки в трее"""
+        if not self.icon:
+            return
+        
+        try:
+            # Определяем цвет иконки на основе статуса
+            if self.phone_link_status == "Работает" and self.listener_status == "Запущен":
+                icon_type = "active"
+            elif self.phone_link_status == "Не работает":
+                icon_type = "warning"
+            elif self.listener_status == "Остановлен":
+                icon_type = "inactive"
+            else:
+                icon_type = "working"
+            
+            # Обновляем иконку
+            self.icon.icon = self.icon_images[icon_type]
+            
+            # Обновляем меню
+            self.icon.menu = self._create_menu()
+            
+        except Exception as e:
+            logger.exception(f"Ошибка обновления иконки: {e}")
+    
+    def get_status(self) -> Dict[str, Any]:
+        """
+        Получение статуса трея
+        
+        Returns:
+            dict: Статус трея
+        """
+        return {
+            "is_running": self.is_running,
+            "app_status": self.app_status,
+            "phone_link_status": self.phone_link_status,
+            "listener_status": self.listener_status,
+            "tray_available": TRAY_AVAILABLE
+        }
