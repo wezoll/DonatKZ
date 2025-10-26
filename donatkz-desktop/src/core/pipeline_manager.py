@@ -279,3 +279,5 @@ class PipelineManager:
         
         logger.info("PipelineManager закрыт")
 
+
+

@@ -21,7 +21,7 @@ class Config:
     DATA_DIR = BASE_DIR / "data"
     
     # API Settings
-    API_BASE_URL: str = os.getenv("API_BASE_URL", "http://localhost:8080/api")
+    API_BASE_URL: str = os.getenv("API_BASE_URL", "https://webhook-test.com/6aae402ea88d7917ff186ee41bc438cc")
     USE_MOCK_API: bool = os.getenv("USE_MOCK_API", "false").lower() == "true"
     
     # Logging
@@ -39,6 +39,11 @@ class Config:
         os.getenv("DEDUPLICATION_WINDOW_SECONDS", "60")
     )
     DEDUPLICATION_MAX_CACHE_SIZE: int = 100
+    
+    # Notification Settings
+    NOTIFICATION_MAX_AGE_MINUTES: int = int(
+        os.getenv("NOTIFICATION_MAX_AGE_MINUTES", "60")
+    )
     
     # Retry Settings
     MAX_RETRY_ATTEMPTS: int = int(os.getenv("MAX_RETRY_ATTEMPTS", "3"))
@@ -66,6 +71,10 @@ class Config:
     # Database
     DATABASE_FILE: Path = DATA_DIR / "donations_queue.db"
     DATABASE_MAX_QUEUE_SIZE: int = 1000
+    
+    # Donations Database (новая БД для хранения всех донатов)
+    DONATIONS_DB_FILE: Path = BASE_DIR / "donations.db"
+    DONATIONS_DB_TIMEOUT: int = 30
     
     # Windows Credential Manager
     CREDENTIAL_TARGET_NAME: str = "DonatKZ_Desktop_App"

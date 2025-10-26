@@ -389,9 +389,10 @@ class WindowsNotificationListener:
     
     def _is_notification_recent(self, notification) -> bool:
         """
-        Проверка, свежее ли уведомление (не старше 5 минут)
+        Проверка, свежее ли уведомление
         
-        Это нужно чтобы при перезапуске приложения не обрабатывать старые уведомления
+        По умолчанию не старше 30 минут (настраивается в Config.NOTIFICATION_MAX_AGE_MINUTES)
+        Это нужно чтобы при перезапуске приложения не обрабатывать очень старые уведомления
         
         Args:
             notification: UserNotification object
@@ -401,6 +402,7 @@ class WindowsNotificationListener:
         """
         try:
             from datetime import datetime, timezone, timedelta
+            from config import Config
             
             # Пробуем получить время создания уведомления
             creation_time = None
@@ -426,10 +428,10 @@ class WindowsNotificationListener:
                         creation_time = creation_time.astimezone().replace(tzinfo=None)
                     
                     age = now - creation_time
-                    max_age = timedelta(minutes=5)  # 5 минут
+                    max_age = timedelta(minutes=Config.NOTIFICATION_MAX_AGE_MINUTES)
                     
                     is_recent = age < max_age
-                    logger.debug(f"Возраст уведомления: {age.total_seconds():.0f}сек, recent={is_recent}")
+                    logger.debug(f"Возраст уведомления: {age.total_seconds():.0f}сек (макс {Config.NOTIFICATION_MAX_AGE_MINUTES}мин), recent={is_recent}")
                     return is_recent
         
         except Exception as e:

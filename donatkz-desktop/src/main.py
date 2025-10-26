@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from config import Config
 from utils.logger import setup_logger
 from ui.main_window import DonatKZApp
+from database.db_manager import DatabaseManager
 
 # Настройка логирования
 logger = setup_logger(
@@ -33,6 +34,11 @@ def main():
     root = None
     
     try:
+        logger.info("🗄️ Инициализация базы данных...")
+        # Инициализируем БД ДО создания GUI
+        db_manager = DatabaseManager(Config.DONATIONS_DB_FILE)
+        logger.info(f"✅ БД инициализирована: {Config.DONATIONS_DB_FILE}")
+        
         logger.info("Создание главного окна Tkinter...")
         # Создаём главное окно Tkinter
         root = tk.Tk()
@@ -47,6 +53,7 @@ def main():
         app.add_log_message("INFO", f"Приложение запущено")
         app.add_log_message("INFO", f"Режим: {'Mock API' if Config.USE_MOCK_API else 'Real API'}")
         app.add_log_message("INFO", f"API URL: {Config.API_BASE_URL}")
+        app.add_log_message("INFO", f"🗄️ БД инициализирована: donations.db")
         
         # Обновляем статус
         app.update_status("Активен", "green")

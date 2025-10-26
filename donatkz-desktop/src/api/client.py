@@ -63,11 +63,32 @@ class DonatKZAPI(BaseAPIClient):
     
     async def send_donation(self, donation_data: Dict[str, Any], access_token: str) -> Dict[str, Any]:
         """
-        Отправка доната на сервер
+        Отправка доната на webhook
         
-        TODO: Реализация в Этапе 8
+        Временная реализация для тестирования webhook
+        Когда будет готов Java backend, заменить на полную реализацию
         """
-        raise NotImplementedError("Real API client will be implemented in Stage 8")
+        try:
+            await self._ensure_session()
+            
+            # Отправляем POST запрос на webhook
+            async with self.session.post(
+                self.base_url,
+                json=donation_data,
+                headers={"Content-Type": "application/json"}
+            ) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    logger.info(f"✅ Донат отправлен на webhook: {self.base_url}")
+                    return {"success": True, "data": result}
+                else:
+                    logger.warning(f"⚠️ Webhook ответил с кодом {response.status}")
+                    text = await response.text()
+                    return {"success": False, "status": response.status, "error": text}
+                    
+        except Exception as e:
+            logger.exception(f"❌ Ошибка отправки на webhook: {e}")
+            return {"success": False, "error": str(e)}
     
     async def get_settings(self, access_token: str) -> Dict[str, Any]:
         """
@@ -106,6 +127,8 @@ class DonatKZAPI(BaseAPIClient):
         if self.session and not self.session.closed:
             await self.session.close()
             logger.info("[REAL API] Session closed")
+
+
 
 
 

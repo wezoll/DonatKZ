@@ -337,4 +337,57 @@ def ask_yes_no(title: str, message: str) -> bool:
     return messagebox.askyesno(title, message)
 
 
+class SimpleTooltip:
+    """
+    Простая подсказка при наведении на виджет
+    
+    Используется для отображения дополнительной информации
+    """
+    
+    def __init__(self, widget, text: str):
+        """
+        Инициализация подсказки
+        
+        Args:
+            widget: Виджет для которого показывать подсказку
+            text: Текст подсказки
+        """
+        self.widget = widget
+        self.text = text
+        self.tip_window = None
+        self.id = None
+        
+        self.widget.bind("<Enter>", self.enter)
+        self.widget.bind("<Leave>", self.leave)
+    
+    def enter(self, event=None):
+        """Показать подсказку"""
+        if self.tip_window or not self.text:
+            return
+        
+        x = self.widget.winfo_rootx() + 20
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
+        
+        self.tip_window = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)
+        tw.wm_geometry(f"+{x}+{y}")
+        
+        label = tk.Label(
+            tw, text=self.text,
+            background="#ffffe0",
+            relief=tk.SOLID,
+            borderwidth=1,
+            font=("Segoe UI", 8)
+        )
+        label.pack(ipadx=3, ipady=3)
+    
+    def leave(self, event=None):
+        """Скрыть подсказку"""
+        if self.tip_window:
+            self.tip_window.destroy()
+            self.tip_window = None
+
+
+
+
 

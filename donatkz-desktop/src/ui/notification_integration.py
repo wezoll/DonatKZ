@@ -205,6 +205,9 @@ class NotificationIntegration:
                 self.gui_app.dashboard_tab.get_donations_count()
             )
             
+            # Обновляем вкладку статистики
+            self.gui_app.refresh_statistics_on_donation()
+            
             # Логируем успех
             self._add_log("INFO", f"✅ Донат добавлен в Dashboard: {donation.amount}₸")
             
@@ -219,7 +222,7 @@ class NotificationIntegration:
         """
         Симуляция отправки на API
         
-        В Этапе 5 будет заменено на реальную отправку
+        В Этап 5 будет заменено на реальную отправку
         
         Args:
             donation: Объект DonationData

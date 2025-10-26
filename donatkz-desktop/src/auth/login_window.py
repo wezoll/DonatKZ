@@ -347,3 +347,5 @@ class LoginWindow:
         """Уничтожить окно"""
         self.window.destroy()
 
+
+

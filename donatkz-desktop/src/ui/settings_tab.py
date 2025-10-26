@@ -3,12 +3,20 @@ import tkinter as tk
 from tkinter import ttk
 import logging
 import json
-from pathlib import Path
-
-from .widgets import LabeledEntry, LabeledCheckbutton, ButtonGroup, show_info, show_error, ask_yes_no
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from .widgets import (
+    LabeledEntry, 
+    LabeledCheckbutton, 
+    ButtonGroup, 
+    show_info, 
+    show_error, 
+    ask_yes_no,
+    SimpleTooltip
+)
 from config import Config
 
 logger = logging.getLogger(__name__)
@@ -32,6 +40,7 @@ class SettingsTab:
             parent: Родительский виджет (Notebook)
         """
         self.frame = ttk.Frame(parent)
+        self.current_api_url = None
         
         # Создаём прокручиваемый canvas для настроек
         self._create_scrollable_frame()
@@ -79,13 +88,34 @@ class SettingsTab:
         frame = ttk.LabelFrame(self.scrollable_frame, text="", padding=10)
         frame.pack(fill=tk.X, padx=10, pady=5)
         
-        # API URL
+        # API URL с индикатором обновления
+        api_url_frame = ttk.Frame(frame)
+        api_url_frame.pack(fill=tk.X, pady=5)
+        
         self.api_url_entry = LabeledEntry(
-            frame,
+            api_url_frame,
             label_text="API URL:",
             entry_width=40
         )
-        self.api_url_entry.pack(fill=tk.X, pady=5)
+        self.api_url_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        # Привязываем событие изменения текста
+        self.api_url_entry.entry.bind("<KeyRelease>", self._on_api_url_changed)
+        
+        # Индикатор обновления
+        self.api_update_indicator = ttk.Label(
+            api_url_frame,
+            text="✅",
+            font=("Segoe UI", 10),
+            foreground="green"
+        )
+        self.api_update_indicator.pack(side=tk.LEFT, padx=(5, 0))
+        
+        # Подсказка для индикатора
+        SimpleTooltip(
+            self.api_update_indicator,
+            "✅ = Сохранено | ⚠️ = Нужно сохранить"
+        )
         
         # Mock API чекбокс
         self.mock_api_check = LabeledCheckbutton(
@@ -218,6 +248,7 @@ class SettingsTab:
             
             # Заполняем поля
             self.api_url_entry.set(settings.get("api_url", Config.API_BASE_URL))
+            self.current_api_url = self.api_url_entry.get()
             self.mock_api_check.set(settings.get("use_mock_api", Config.USE_MOCK_API))
             self.sound_check.set(settings.get("sound_enabled", True))
             self.popup_check.set(settings.get("popup_enabled", True))
@@ -233,6 +264,16 @@ class SettingsTab:
         except Exception as e:
             logger.error(f"Ошибка загрузки настроек: {e}")
             show_error("Ошибка", f"Не удалось загрузить настройки: {e}")
+    
+    def _on_api_url_changed(self, event=None):
+        """Обработчик изменения API URL"""
+        current = self.api_url_entry.get()
+        if current != self.current_api_url:
+            # URL изменился - показываем оранжевый индикатор
+            self.api_update_indicator.config(text="⚠️", foreground="orange")
+        else:
+            # URL вернулся к сохранённому - показываем зелёный индикатор
+            self.api_update_indicator.config(text="✅", foreground="green")
     
     def save_settings(self):
         """Сохранить настройки"""
@@ -265,7 +306,12 @@ class SettingsTab:
                 json.dump(settings, f, indent=2, ensure_ascii=False)
             
             logger.info("Настройки сохранены")
-            show_info("Успешно", "Настройки сохранены!")
+            
+            # Обновляем текущий API URL и индикатор
+            self.current_api_url = self.api_url_entry.get()
+            self.api_update_indicator.config(text="✅", foreground="green")
+            
+            show_info("Успешно", "Настройки сохранены и обновлены!")
             
         except ValueError as e:
             show_error("Ошибка", "Неверный формат суммы. Введите число.")

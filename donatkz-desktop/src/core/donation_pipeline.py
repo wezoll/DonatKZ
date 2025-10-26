@@ -5,7 +5,7 @@ Donation Processing Pipeline
 1. Получение уведомления
 2. Парсинг через KaspiNotificationParser
 3. Валидация через DonationValidator
-4. Дедупликация через DeduplicationManager
+4. Дедупликация через базу данных
 5. Отправка на API
 6. Обновление GUI
 """
@@ -15,11 +15,13 @@ from typing import Callable, Optional, Dict, Any, List
 from datetime import datetime
 import threading
 import time
+from pathlib import Path
 
 from notification.parser import KaspiNotificationParser
 from notification.validator import DonationValidator
 from notification.models import DonationData
 from utils.deduplication import DeduplicationManager
+from database.db_manager import DatabaseManager
 from api import create_api_client
 from config import Config
 
@@ -59,9 +61,16 @@ class DonationPipeline:
             window_seconds=Config.DEDUPLICATION_WINDOW_SECONDS
         )
         
+        # Инициализируем DatabaseManager
+        self.db_manager = DatabaseManager(Config.DONATIONS_DB_FILE)
+        
         # API клиент
         self.api_client = None
         self.api_token = None
+        
+        # ВАЖНО: Создаём один persistent event loop для всех асинхронных операций
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
         
         # Статистика
         self.stats = {
@@ -72,6 +81,7 @@ class DonationPipeline:
             "sent_to_api": 0,
             "api_errors": 0,
             "gui_updates": 0,
+            "db_duplicates": 0,
             "start_time": datetime.now()
         }
         
@@ -80,7 +90,7 @@ class DonationPipeline:
         self.is_processing = False
         self.processing_thread = None
         
-        logger.info("DonationPipeline инициализирован")
+        logger.info("DonationPipeline инициализирован с DatabaseManager")
         logger.info(f"Mock API: {use_mock_api}")
     
     async def initialize_api(self, email: str = None, password: str = None):
@@ -153,7 +163,7 @@ class DonationPipeline:
                 notification_text = self.processing_queue.pop(0)
                 
                 # Обрабатываем синхронно
-                asyncio.run(self._process_single_notification(notification_text))
+                self.loop.run_until_complete(self._process_single_notification(notification_text))
                 
                 # Небольшая задержка между обработкой
                 time.sleep(0.1)
@@ -193,15 +203,33 @@ class DonationPipeline:
             self.stats["validation_passed"] += 1
             logger.info("✅ Валидация пройдена")
             
-            # Шаг 3: Дедупликация
+            # Шаг 3: Дедупликация (в памяти)
             if self.dedup_manager.is_duplicate(donation):
-                logger.warning(f"⚠️ Обнаружен дубликат доната: {donation.amount}₸")
+                logger.warning(f"⚠️ Обнаружен дубликат доната в памяти: {donation.amount}₸")
+                return
+            
+            # Шаг 4: Дедупликация (в БД) - НОВОЕ!
+            # Форматируем дату в ISO 8601
+            donation_date = DatabaseManager.format_datetime_iso8601(donation.timestamp)
+            
+            # Преобразуем сумму в целое число для хранения в БД
+            donation_amount = int(donation.amount)
+            
+            # Проверяем наличие в БД
+            if self.db_manager.check_donation_exists(
+                sender=donation.sender_name,
+                amount=donation_amount,
+                message=donation.message,
+                date=donation_date
+            ):
+                logger.warning(f"⚠️ Обнаружен дубликат в БД: {donation.amount}₸")
+                self.stats["db_duplicates"] += 1
                 return
             
             self.stats["deduplication_passed"] += 1
-            logger.info("✅ Дедупликация пройдена")
+            logger.info("✅ Дедупликация пройдена (БД)")
             
-            # Шаг 4: Отправка на API
+            # Шаг 5: Отправка на API
             api_success = await self._send_to_api(donation)
             
             if api_success:
@@ -211,7 +239,16 @@ class DonationPipeline:
                 self.stats["api_errors"] += 1
                 logger.error("❌ Ошибка отправки на API")
             
-            # Шаг 5: Обновление GUI
+            # Шаг 6: Сохранение в БД (НОВОЕ!)
+            # Сохраняем независимо от результата API (для локальной статистики)
+            self.db_manager.save_donation(
+                sender=donation.sender_name,
+                amount=donation_amount,
+                message=donation.message,
+                date=donation_date
+            )
+            
+            # Шаг 7: Обновление GUI
             if self.gui_callback:
                 self.gui_callback(donation)
                 self.stats["gui_updates"] += 1
@@ -294,6 +331,7 @@ class DonationPipeline:
             "sent_to_api": 0,
             "api_errors": 0,
             "gui_updates": 0,
+            "db_duplicates": 0,
             "start_time": datetime.now()
         }
         logger.info("Статистика очищена")
@@ -312,8 +350,25 @@ class DonationPipeline:
         """Закрытие pipeline"""
         self.stop_processing()
         
+        if self.db_manager:
+            self.db_manager.close()
+        
         if self.api_client:
             await self.api_client.close()
         
+        # Закрываем event loop
+        if self.loop and not self.loop.is_closed():
+            self.loop.close()
+            logger.info("Event loop закрыт")
+        
         logger.info("DonationPipeline закрыт")
+    
+    def get_db_manager(self) -> DatabaseManager:
+        """
+        Получить DatabaseManager для доступа к статистике
+        
+        Returns:
+            DatabaseManager: Менеджер БД
+        """
+        return self.db_manager
 
