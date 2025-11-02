@@ -113,12 +113,25 @@ class PipelineManager:
             
             logger.info("🚀 Запуск полного pipeline...")
             
+            # Проверяем что компоненты созданы
+            if not self.notification_listener:
+                logger.error("❌ Notification Listener не создан! Вызовите initialize() сначала.")
+                self._add_log("ERROR", "❌ Notification Listener не создан!")
+                return False
+            
+            if not self.donation_pipeline:
+                logger.error("❌ Donation Pipeline не создан! Вызовите initialize() сначала.")
+                self._add_log("ERROR", "❌ Donation Pipeline не создан!")
+                return False
+            
             # 1. Запускаем слушатель
+            logger.info("🔍 Запускаю Notification Listener...")
             if self.notification_listener.start():
                 self.stats["listener_started"] = True
                 logger.info("✅ Notification Listener запущен")
             else:
                 logger.error("❌ Не удалось запустить слушатель")
+                self._add_log("ERROR", "❌ Не удалось запустить слушатель")
                 return False
             
             # 2. Pipeline уже готов к работе
@@ -179,16 +192,22 @@ class PipelineManager:
             notification_text: Текст уведомления
         """
         try:
+            logger.info(f"📱 УВЕДОМЛЕНИЕ ПОЛУЧЕНО: {notification_text[:100]}...")
             self.stats["last_activity"] = datetime.now()
             
             # Передаём в pipeline
             if self.donation_pipeline:
+                logger.debug(f"📤 Передаю уведомление в pipeline...")
                 self.donation_pipeline.process_notification(notification_text)
+                logger.debug(f"✅ Уведомление передано в pipeline")
+            else:
+                logger.error("❌ Donation Pipeline не инициализирован!")
+                self._add_log("ERROR", "❌ Pipeline не инициализирован!")
             
             self._add_log("INFO", f"📱 Уведомление получено: {notification_text[:50]}...")
             
         except Exception as e:
-            logger.exception(f"Ошибка обработки уведомления: {e}")
+            logger.exception(f"❌ Ошибка обработки уведомления: {e}")
             self._add_log("ERROR", f"❌ Ошибка обработки: {e}")
     
     def _on_donation_processed(self, donation):
@@ -199,23 +218,34 @@ class PipelineManager:
             donation: Объект DonationData
         """
         try:
+            logger.info(f"🎉 ДОНАТ ОБРАБОТАН! {donation.amount}₸ от {donation.sender_name}")
             self.stats["total_processed"] += 1
             self.stats["last_activity"] = datetime.now()
             
             # Обновляем GUI
-            self.gui_app.add_donation_to_dashboard(donation.to_dict())
-            self.gui_app.update_statusbar(
-                f"Последний донат: {donation.amount}₸ от {donation.sender_name}"
-            )
-            self.gui_app.update_donation_counter(
-                self.gui_app.dashboard_tab.get_donations_count()
-            )
+            try:
+                donation_dict = donation.to_dict()
+                logger.debug(f"📊 Добавляю донат в Dashboard: {donation_dict}")
+                self.gui_app.add_donation_to_dashboard(donation_dict)
+                
+                self.gui_app.update_statusbar(
+                    f"Последний донат: {donation.amount}₸ от {donation.sender_name}"
+                )
+                self.gui_app.update_donation_counter(
+                    self.gui_app.dashboard_tab.get_donations_count()
+                )
+                
+                logger.info("✅ GUI обновлён успешно")
+                
+            except Exception as gui_error:
+                logger.exception(f"❌ Ошибка обновления GUI: {gui_error}")
+                self._add_log("ERROR", f"❌ Ошибка GUI: {gui_error}")
             
             self._add_log("INFO", f"✅ Донат обработан: {donation.amount}₸ от {donation.sender_name}")
             
         except Exception as e:
-            logger.exception(f"Ошибка обновления GUI: {e}")
-            self._add_log("ERROR", f"❌ Ошибка GUI: {e}")
+            logger.exception(f"❌ Ошибка обработки доната: {e}")
+            self._add_log("ERROR", f"❌ Ошибка: {e}")
     
     def get_comprehensive_stats(self) -> Dict[str, Any]:
         """
@@ -263,12 +293,23 @@ class PipelineManager:
         self._add_log("INFO", "🔄 Pipeline перезапущен")
     
     def _update_gui_status(self, status: str, color: str):
-        """Обновление статуса в GUI"""
-        self.gui_app.update_status(status, color)
+        """Обновление статуса в GUI (thread-safe)"""
+        try:
+            # Используем root.after() для thread-safe обновления GUI
+            root = self.gui_app.root
+            root.after(0, lambda: self.gui_app.update_status(status, color))
+        except Exception as e:
+            logger.warning(f"Не удалось обновить статус GUI: {e}")
     
     def _add_log(self, level: str, message: str):
-        """Добавление лога в GUI"""
-        self.gui_app.add_log_message(level, message)
+        """Добавление лога в GUI (thread-safe)"""
+        try:
+            # Используем root.after() для thread-safe обновления GUI
+            root = self.gui_app.root
+            root.after(0, lambda: self.gui_app.add_log_message(level, message))
+        except Exception as e:
+            # Fallback - логируем напрямую если GUI недоступен
+            logger.info(f"[{level}] {message}")
     
     async def close(self):
         """Закрытие менеджера"""
@@ -278,6 +319,7 @@ class PipelineManager:
             await self.donation_pipeline.close()
         
         logger.info("PipelineManager закрыт")
+
 
 
 

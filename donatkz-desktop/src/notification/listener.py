@@ -138,23 +138,29 @@ class WindowsNotificationListener:
                     notifications = await self.listener.get_notifications_async(NotificationKinds.TOAST)
                     
                     if notifications:
+                        logger.debug(f"📬 Найдено {len(notifications)} уведомлений")
                         for notification in notifications:
                             try:
                                 notif_id = self._generate_notification_id(notification)
                                 
-                                # Проверяем возраст уведомления - игнорируем старые (>5 минут)
-                                if not self._is_notification_recent(notification):
-                                    logger.debug("Игнорируем старое уведомление (>5 минут)")
+                                # Проверяем возраст уведомления - игнорируем старые
+                                is_recent = self._is_notification_recent(notification)
+                                if not is_recent:
+                                    logger.debug(f"⏰ Игнорируем старое уведомление (ID: {notif_id[:16]}...)")
                                     continue
+                                logger.debug(f"✅ Уведомление свежее (ID: {notif_id[:16]}...)")
                                 
                                 if notif_id not in self.last_seen:
+                                    logger.debug(f"🆕 Новое уведомление: {notif_id[:16]}...")
                                     self.last_seen.add(notif_id)
                                     await self._process_notification(notification)
+                                else:
+                                    logger.debug(f"🔁 Уведомление уже обработано: {notif_id[:16]}...")
                             except Exception as e:
-                                logger.debug(f"Ошибка обработки: {e}")
+                                logger.warning(f"⚠️ Ошибка обработки уведомления: {e}")
                     
                     if check_count % 30 == 0:
-                        logger.debug(f"📱 Polling активен... ({check_count} проверок)")
+                        logger.info(f"📱 Polling активен... (обработано уведомлений: {self.total_notifications}, отфильтровано: {self.filtered_notifications})")
                     
                     if len(self.last_seen) > 200:
                         self.last_seen.clear()
@@ -257,23 +263,38 @@ class WindowsNotificationListener:
                 return False
             
             # Фильтруем
-            if not self._should_process_notification(app_id, notification_text):
-                logger.debug(f"Отфильтровано: {notification_text[:50]}...")
+            should_process = self._should_process_notification(app_id, notification_text)
+            if not should_process:
+                logger.debug(f"🚫 Уведомление отфильтровано (app_id={app_id}, text={notification_text[:50]}...)")
                 return False
+            logger.debug(f"✅ Уведомление прошло фильтр (app_id={app_id})")
             
             self.filtered_notifications += 1
-            logger.info(f"📱 Получено уведомление: {notification_text[:100]}...")
+            logger.info(f"📱 ✅ УВЕДОМЛЕНИЕ ОТ KASPI: {notification_text[:100]}...")
             
             # Вызываем callback
             if self.callback:
-                if self.root_window:
-                    try:
-                        self.root_window.after(0, self.callback, notification_text)
-                    except Exception as e:
-                        logger.warning(f"Ошибка callback: {e}")
-                        self.callback(notification_text)
-                else:
-                    self.callback(notification_text)
+                logger.debug(f"📤 Вызываю callback для уведомления...")
+                try:
+                    # Сохраняем notification_text в локальную переменную для lambda
+                    text_to_send = notification_text
+                    
+                    if self.root_window:
+                        try:
+                            # Используем lambda с правильным захватом значения
+                            self.root_window.after(0, lambda txt=text_to_send: self.callback(txt))
+                            logger.debug(f"✅ Callback запланирован через root.after()")
+                        except Exception as e:
+                            logger.warning(f"⚠️ Ошибка root.after(), вызываю напрямую: {e}")
+                            self.callback(text_to_send)
+                    else:
+                        logger.debug(f"📞 Вызываю callback напрямую (нет root_window)")
+                        self.callback(text_to_send)
+                    logger.debug(f"✅ Callback вызван")
+                except Exception as e:
+                    logger.exception(f"❌ КРИТИЧЕСКАЯ ОШИБКА в callback: {e}")
+            else:
+                logger.error("❌ Callback не установлен!")
             
             return True
             

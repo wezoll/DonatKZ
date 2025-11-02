@@ -21,7 +21,7 @@ class Config:
     DATA_DIR = BASE_DIR / "data"
     
     # API Settings
-    API_BASE_URL: str = os.getenv("API_BASE_URL", "https://webhook-test.com/6aae402ea88d7917ff186ee41bc438cc")
+    API_BASE_URL: str = os.getenv("API_BASE_URL", "http://localhost:8080")
     USE_MOCK_API: bool = os.getenv("USE_MOCK_API", "false").lower() == "true"
     
     # Logging

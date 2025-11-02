@@ -11,7 +11,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from .dashboard_tab import DashboardTab
 from .settings_tab import SettingsTab
 from .logs_tab import LogsTab
-from .statistics_tab import StatisticsTab
 from .notification_integration import NotificationIntegration
 from core.pipeline_manager import PipelineManager
 from auth import AuthManager, LoginWindow
@@ -114,10 +113,6 @@ class DonatKZApp:
         # Инициализируем PipelineManager
         self.pipeline_manager = PipelineManager(self)
         
-        # Инициализируем DatabaseManager для вкладки статистики
-        # (используется из pipeline_manager)
-        self.root.after(500, self._setup_statistics_tab)
-        
         logger.info("✅ КОМПОНЕНТЫ ИНИЦИАЛИЗИРОВАНЫ!")
         
         # АВТОЗАПУСК СЛУШАТЕЛЯ УВЕДОМЛЕНИЙ
@@ -130,6 +125,10 @@ class DonatKZApp:
         # Проверяем начальный статус Phone Link
         logger.info("📱 Проверяем начальный статус Phone Link...")
         self._check_initial_phone_link_status()
+        
+        # Загружаем информацию о пользователе из БД
+        logger.info("👤 Загружаем информацию о пользователе...")
+        self.root.after(500, self._load_user_info_from_db)
         
         logger.info("Главное окно инициализировано")
     
@@ -167,13 +166,13 @@ class DonatKZApp:
             side=tk.LEFT, fill=tk.Y, padx=10
         )
         
-        # Email пользователя (будет заполнен после авторизации)
-        self.email_label = ttk.Label(
+        # Информация о пользователе (будет заполнена после авторизации)
+        self.user_label = ttk.Label(
             header_frame,
             text="Не авторизован",
             font=("Segoe UI", 9)
         )
-        self.email_label.pack(side=tk.LEFT, padx=5)
+        self.user_label.pack(side=tk.LEFT, padx=5)
         
         # Кнопка настроек (справа)
         self.settings_button = ttk.Button(
@@ -225,13 +224,11 @@ class DonatKZApp:
         self.dashboard_tab = DashboardTab(self.notebook)
         self.settings_tab = SettingsTab(self.notebook)
         self.logs_tab = LogsTab(self.notebook)
-        self.statistics_tab = StatisticsTab(self.notebook)
         
         # Добавляем вкладки в Notebook
         self.notebook.add(self.dashboard_tab.frame, text="📊 Dashboard")
         self.notebook.add(self.settings_tab.frame, text="⚙️ Настройки")
         self.notebook.add(self.logs_tab.frame, text="📋 Логи")
-        self.notebook.add(self.statistics_tab.frame, text="📈 Статистика")
         
         # Биндим событие смены вкладки
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
@@ -661,14 +658,77 @@ class DonatKZApp:
         indicator = color_indicators.get(color, "⚪")
         self.status_label.config(text=f"{indicator} {status}")
     
+    def _load_user_info_from_db(self):
+        """Загрузить информацию о пользователе из БД и обновить UI"""
+        try:
+            # Получаем DatabaseManager из pipeline_manager
+            if (hasattr(self.pipeline_manager, 'donation_pipeline') and 
+                self.pipeline_manager.donation_pipeline):
+                db_manager = self.pipeline_manager.donation_pipeline.get_db_manager()
+            else:
+                # Fallback - создаём новый
+                from database.db_manager import DatabaseManager
+                from config import Config
+                db_manager = DatabaseManager(Config.DONATIONS_DB_FILE)
+            
+            # Загружаем данные из БД
+            username = db_manager.get_setting("username")
+            subscription_tier = db_manager.get_setting("subscription_tier")
+            email = db_manager.get_setting("email")
+            
+            if username:
+                # Формируем текст для отображения
+                tier_text = subscription_tier or "FREE"
+                tier_emoji = {
+                    "FREE": "🆓",
+                    "BASIC": "⭐",
+                    "PREMIUM": "💎"
+                }.get(tier_text, "🆓")
+                
+                user_text = f"👤 {username} | {tier_emoji} {tier_text}"
+                self.user_label.config(text=user_text)
+                
+                logger.info(f"✅ Загружена информация о пользователе: {username} ({tier_text})")
+                self.add_log_message("INFO", f"✅ Авторизован: {username} ({tier_text})")
+                
+                # Обновляем статус
+                self.update_status("Авторизован", "green")
+            else:
+                logger.warning("⚠️ Информация о пользователе не найдена в БД")
+                self.user_label.config(text="Не авторизован")
+                
+        except Exception as e:
+            logger.exception(f"❌ Ошибка загрузки информации о пользователе: {e}")
+    
+    def update_user_info(self, username: str = None, email: str = None, subscription_tier: str = None):
+        """
+        Обновить отображаемую информацию о пользователе
+        
+        Args:
+            username: Имя пользователя
+            email: Email пользователя
+            subscription_tier: Тариф подписки
+        """
+        if username:
+            tier_text = subscription_tier or "FREE"
+            tier_emoji = {
+                "FREE": "🆓",
+                "BASIC": "⭐",
+                "PREMIUM": "💎"
+            }.get(tier_text, "🆓")
+            
+            user_text = f"👤 {username} | {tier_emoji} {tier_text}"
+            self.user_label.config(text=user_text)
+    
     def update_user_email(self, email: str):
         """
-        Обновить отображаемый email пользователя
+        Обновить отображаемый email пользователя (legacy метод)
         
         Args:
             email: Email пользователя
         """
-        self.email_label.config(text=email)
+        # Для обратной совместимости просто перезагружаем данные из БД
+        self._load_user_info_from_db()
     
     def update_statusbar(self, message: str):
         """
@@ -707,55 +767,26 @@ class DonatKZApp:
         """
         self.logs_tab.add_log(level, message)
     
-    def _setup_statistics_tab(self):
-        """Инициализация вкладки статистики с DatabaseManager"""
-        try:
-            if (hasattr(self.pipeline_manager, 'donation_pipeline') and 
-                self.pipeline_manager.donation_pipeline):
-                db_manager = self.pipeline_manager.donation_pipeline.get_db_manager()
-                self.statistics_tab.set_db_manager(db_manager)
-                logger.info("✅ DatabaseManager установлен в StatisticsTab")
-        except Exception as e:
-            logger.warning(f"⚠️ Не удалось инициализировать StatisticsTab: {e}")
-    
-    def refresh_statistics_on_donation(self):
-        """Обновить статистику на вкладке при новом донате"""
-        try:
-            if hasattr(self.statistics_tab, 'refresh_on_new_donation'):
-                self.statistics_tab.refresh_on_new_donation()
-        except Exception as e:
-            logger.debug(f"Ошибка обновления статистики: {e}")
-
     def _auto_start_listener(self):
         """Автоматический запуск слушателя уведомлений после инициализации"""
         try:
-            # Получаем настройку Mock режима из настроек
-            try:
-                use_mock = self.settings_tab.mock_api_check.var.get()
-                self.add_log_message("DEBUG", f"🔍 Получена настройка use_mock для автозапуска: {use_mock}")
-            except Exception as e:
-                # Если не удалось получить настройку, используем по умолчанию False (Real режим)
-                use_mock = False
-                self.add_log_message("WARNING", f"⚠️ Ошибка получения настройки для автозапуска: {e}, используем Real режим")
+            logger.info("🚀 Автозапуск слушателя уведомлений...")
+            self.add_log_message("INFO", "🚀 Автозапуск слушателя...")
             
-            # Запускаем с правильным режимом (используем pipeline_manager вместо notification_integration!)
-            self.add_log_message("DEBUG", f"🔍 Автоматический запуск pipeline с use_mock={use_mock}")
-            self.pipeline_manager.use_mock_listener = use_mock
-            self.pipeline_manager.use_mock_api = False  # ВСЕГДА используем реальный API, не mock!
+            # Устанавливаем режимы - ВСЕГДА Real режим для продакшена
+            self.pipeline_manager.use_mock_listener = False  # Real слушатель
+            self.pipeline_manager.use_mock_api = False  # Real API
             
             # Инициализируем и запускаем pipeline
             self._initialize_and_start_pipeline()
             self.listener_button.config(text="⏹️")
             
-            # Логируем режим
-            mode = "Mock" if use_mock else "Real"
-            self.add_log_message("INFO", f"🔍 Слушатель запущен в режиме: {mode} (автоматически)")
+            self.add_log_message("INFO", "🔍 Слушатель запущен в режиме: Real (автоматически)")
+            self.add_log_message("INFO", "⚠️ Убедитесь что Phone Link активен и подключен к телефону!")
             
-            # Если Real режим, предупреждаем о Phone Link
-            if not use_mock:
-                self.add_log_message("WARNING", "⚠️ Убедитесь что Phone Link активен и подключен к телефону!")
         except Exception as e:
-            logger.exception(f"Ошибка автоматического запуска слушателя: {e}")
+            logger.exception(f"❌ КРИТИЧЕСКАЯ ОШИБКА автозапуска слушателя: {e}")
+            self.add_log_message("ERROR", f"❌ КРИТИЧЕСКАЯ ОШИБКА: {e}")
     
     def _initialize_and_start_pipeline(self):
         """Асинхронная инициализация и запуск pipeline"""
@@ -763,26 +794,35 @@ class DonatKZApp:
         import asyncio
         
         def init_and_start():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+            loop = None
             try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
                 # Инициализируем pipeline если еще не инициализирован
                 if not self.pipeline_manager.donation_pipeline:
                     logger.info("🚀 Инициализирую Pipeline Manager...")
                     self.add_log_message("INFO", "🚀 Инициализирую Pipeline Manager...")
                     
+                    # Инициализируем БЕЗ email/password (используем device_token из БД)
                     loop.run_until_complete(self.pipeline_manager.initialize())
                     
                     logger.info("✅ Pipeline Manager инициализирован")
                     self.add_log_message("INFO", "✅ Pipeline Manager инициализирован")
                     
-                    # Проверяем инициализацию API
-                    if self.pipeline_manager.donation_pipeline and self.pipeline_manager.donation_pipeline.api_client:
-                        logger.info("✅ API клиент инициализирован")
-                        self.add_log_message("INFO", "✅ API клиент инициализирован")
-                    else:
-                        logger.warning("⚠️ API клиент НЕ инициализирован!")
-                        self.add_log_message("WARNING", "⚠️ API клиент НЕ инициализирован!")
+                    # Проверяем инициализацию
+                    if not self.pipeline_manager.donation_pipeline:
+                        logger.error("❌ Donation Pipeline НЕ создан после initialize()!")
+                        self.add_log_message("ERROR", "❌ Donation Pipeline НЕ создан!")
+                        return
+                    
+                    if not self.pipeline_manager.notification_listener:
+                        logger.error("❌ Notification Listener НЕ создан после initialize()!")
+                        self.add_log_message("ERROR", "❌ Notification Listener НЕ создан!")
+                        return
+                    
+                    logger.info("✅ Все компоненты созданы")
+                    self.add_log_message("INFO", "✅ Все компоненты созданы")
                 else:
                     logger.info("ℹ️ Pipeline уже инициализирован")
                     self.add_log_message("INFO", "ℹ️ Pipeline уже инициализирован")
@@ -790,16 +830,35 @@ class DonatKZApp:
                 # Запускаем pipeline
                 logger.info("🚀 Запускаю Pipeline...")
                 self.add_log_message("INFO", "🚀 Запускаю Pipeline...")
-                self.pipeline_manager.start()
                 
-                logger.info("✅ Pipeline запущен!")
-                self.add_log_message("INFO", "✅ Pipeline запущен!")
+                start_result = self.pipeline_manager.start()
+                
+                if start_result:
+                    logger.info("✅ Pipeline запущен!")
+                    self.add_log_message("INFO", "✅ Pipeline запущен!")
+                    
+                    # Проверяем что слушатель действительно запущен
+                    if self.pipeline_manager.notification_listener:
+                        listener_running = getattr(self.pipeline_manager.notification_listener, 'is_running', False)
+                        logger.info(f"📱 Слушатель уведомлений: {'✅ запущен' if listener_running else '❌ НЕ запущен'}")
+                        self.add_log_message("INFO", f"📱 Слушатель: {'✅ запущен' if listener_running else '❌ НЕ запущен'}")
+                        
+                        if not listener_running:
+                            logger.error("❌ Слушатель создан, но НЕ запущен!")
+                            self.add_log_message("ERROR", "❌ Слушатель создан, но НЕ запущен!")
+                    else:
+                        logger.error("❌ Notification Listener не создан!")
+                        self.add_log_message("ERROR", "❌ Notification Listener не создан!")
+                else:
+                    logger.error("❌ Не удалось запустить Pipeline!")
+                    self.add_log_message("ERROR", "❌ Не удалось запустить Pipeline!")
                 
             except Exception as e:
-                logger.exception(f"Ошибка инициализации pipeline: {e}")
-                self.add_log_message("ERROR", f"❌ Ошибка: {e}")
+                logger.exception(f"❌ КРИТИЧЕСКАЯ ОШИБКА инициализации pipeline: {e}")
+                self.add_log_message("ERROR", f"❌ КРИТИЧЕСКАЯ ОШИБКА: {e}")
             finally:
-                loop.close()
+                if loop and not loop.is_closed():
+                    loop.close()
         
         thread = threading.Thread(target=init_and_start, daemon=True)
         thread.start()

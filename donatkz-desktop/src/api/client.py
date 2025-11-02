@@ -61,34 +61,105 @@ class DonatKZAPI(BaseAPIClient):
         """
         raise NotImplementedError("Real API client will be implemented in Stage 8")
     
-    async def send_donation(self, donation_data: Dict[str, Any], access_token: str) -> Dict[str, Any]:
+    async def device_pair(self, code: str, device_id: str, device_name: str = "Desktop App") -> Dict[str, Any]:
         """
-        Отправка доната на webhook
+        Привязка устройства к аккаунту через 6-значный код
         
-        Временная реализация для тестирования webhook
-        Когда будет готов Java backend, заменить на полную реализацию
+        Args:
+            code: 6-значный код с сайта
+            device_id: UUID устройства
+            device_name: Название устройства
+            
+        Returns:
+            dict: Данные о привязке или ошибка
         """
         try:
             await self._ensure_session()
             
-            # Отправляем POST запрос на webhook
-            async with self.session.post(
-                self.base_url,
-                json=donation_data,
-                headers={"Content-Type": "application/json"}
-            ) as response:
+            url = f"{self.base_url}/api/device/pair"
+            payload = {
+                "code": code.upper(),
+                "deviceId": device_id,
+                "deviceName": device_name
+            }
+            
+            async with self.session.post(url, json=payload) as response:
                 if response.status == 200:
                     result = await response.json()
-                    logger.info(f"✅ Донат отправлен на webhook: {self.base_url}")
-                    return {"success": True, "data": result}
+                    logger.info("✅ Устройство успешно привязано")
+                    return result
                 else:
-                    logger.warning(f"⚠️ Webhook ответил с кодом {response.status}")
-                    text = await response.text()
-                    return {"success": False, "status": response.status, "error": text}
+                    error_data = await response.json()
+                    logger.error(f"❌ Ошибка привязки устройства: {error_data.get('message')}")
+                    return {"error": error_data.get("message", "Неизвестная ошибка")}
                     
         except Exception as e:
-            logger.exception(f"❌ Ошибка отправки на webhook: {e}")
-            return {"success": False, "error": str(e)}
+            logger.exception(f"❌ Ошибка привязки устройства: {e}")
+            return {"error": str(e)}
+    
+    async def device_validate(self, device_token: str) -> Dict[str, Any]:
+        """
+        Проверка валидности device token
+        
+        Args:
+            device_token: Device Token
+            
+        Returns:
+            dict: Данные о пользователе или ошибка
+        """
+        try:
+            await self._ensure_session()
+            
+            url = f"{self.base_url}/api/device/validate"
+            headers = {"Authorization": f"Bearer {device_token}"}
+            
+            async with self.session.get(url, headers=headers) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    logger.info("✅ Device token валидный")
+                    return result
+                else:
+                    error_data = await response.json()
+                    logger.warning(f"⚠️ Device token невалидный: {error_data.get('message')}")
+                    return {"error": error_data.get("message", "Неизвестная ошибка")}
+                    
+        except Exception as e:
+            logger.exception(f"❌ Ошибка валидации токена: {e}")
+            return {"error": str(e)}
+    
+    async def send_donation(self, donation_data: Dict[str, Any], access_token: str) -> Dict[str, Any]:
+        """
+        Отправка доната на Backend
+        
+        Args:
+            donation_data: Данные доната
+            access_token: Device Token
+            
+        Returns:
+            dict: Результат отправки
+        """
+        try:
+            await self._ensure_session()
+            
+            url = f"{self.base_url}/api/donations"
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            }
+            
+            async with self.session.post(url, json=donation_data, headers=headers) as response:
+                if response.status == 201:
+                    result = await response.json()
+                    logger.info(f"✅ Донат отправлен на Backend")
+                    return result
+                else:
+                    error_data = await response.json()
+                    logger.error(f"❌ Ошибка отправки доната: {error_data.get('message')}")
+                    return {"error": error_data.get("message", "Неизвестная ошибка")}
+                    
+        except Exception as e:
+            logger.exception(f"❌ Ошибка отправки доната: {e}")
+            return {"error": str(e)}
     
     async def get_settings(self, access_token: str) -> Dict[str, Any]:
         """

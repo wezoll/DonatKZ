@@ -98,27 +98,28 @@ class DonationPipeline:
         Инициализация API клиента
         
         Args:
-            email: Email для авторизации (опционально)
-            password: Пароль для авторизации (опционально)
+            email: Email для авторизации (опционально, не используется - используем device_token)
+            password: Пароль для авторизации (опционально, не используется)
         """
         try:
             # Создаём API клиент
+            logger.info(f"🔧 Создаю API клиент (use_mock={self.use_mock_api})...")
             self.api_client = create_api_client(use_mock=self.use_mock_api)
             
-            if email and password:
-                # Авторизация
-                login_result = await self.api_client.login(email, password)
-                if login_result.get("success"):
-                    self.api_token = login_result.get("access_token")
-                    logger.info("✅ API авторизация успешна")
-                else:
-                    logger.warning("⚠️ API авторизация не удалась")
+            # Проверяем наличие device_token из БД
+            device_token = self.db_manager.get_setting("device_token")
+            if device_token:
+                logger.info("✅ Device token найден в БД, API готов к работе")
             else:
-                logger.info("ℹ️ API без авторизации (Mock режим)")
+                logger.warning("⚠️ Device token не найден в БД, донаты не будут отправляться на Backend")
+            
+            # НЕ используем email/password - используем device_token из БД при отправке
+            logger.info("ℹ️ API клиент инициализирован (используется device_token из БД)")
                 
         except Exception as e:
-            logger.exception(f"Ошибка инициализации API: {e}")
+            logger.exception(f"❌ Ошибка инициализации API: {e}")
             self.api_client = None
+            # НЕ падаем с ошибкой - слушатель должен работать даже без API
     
     def process_notification(self, notification_text: str):
         """
@@ -183,11 +184,13 @@ class DonationPipeline:
             notification_text: Текст уведомления
         """
         try:
+            logger.debug(f"🔍 Начинаю обработку уведомления: {notification_text[:100]}...")
+            
             # Шаг 1: Парсинг
             donation = self.parser.parse(notification_text)
             
             if not donation:
-                logger.warning("⚠️ Не удалось распарсить уведомление")
+                logger.warning(f"⚠️ Не удалось распарсить уведомление: {notification_text[:100]}...")
                 return
             
             self.stats["parsed_successfully"] += 1
@@ -250,12 +253,18 @@ class DonationPipeline:
             
             # Шаг 7: Обновление GUI
             if self.gui_callback:
-                self.gui_callback(donation)
-                self.stats["gui_updates"] += 1
-                logger.info("✅ GUI обновлён")
+                try:
+                    self.gui_callback(donation)
+                    self.stats["gui_updates"] += 1
+                    logger.info("✅ GUI обновлён")
+                except Exception as gui_error:
+                    logger.exception(f"❌ Ошибка обновления GUI: {gui_error}")
+                    # Не прерываем обработку из-за ошибки GUI
+            else:
+                logger.warning("⚠️ GUI callback не установлен!")
             
         except Exception as e:
-            logger.exception(f"Ошибка обработки уведомления: {e}")
+            logger.exception(f"❌ Ошибка обработки уведомления: {e}")
     
     async def _send_to_api(self, donation: DonationData) -> bool:
         """
@@ -272,19 +281,37 @@ class DonationPipeline:
                 logger.warning("API клиент не инициализирован")
                 return False
             
-            # Подготавливаем данные для API
+            # Получаем device_token из БД
+            device_token = self.db_manager.get_setting("device_token")
+            if not device_token:
+                logger.warning("⚠️ Нет device_token, донат не будет отправлен на Backend")
+                return False
+            
+            # Подготавливаем данные для API согласно спецификации Backend
             api_data = {
-                "amount": donation.amount,
+                "amount": int(donation.amount),
                 "senderName": donation.sender_name,
-                "message": donation.message or "",
+                "message": donation.message or None,  # может быть null
                 "timestamp": donation.timestamp.isoformat(),
-                "rawText": donation.raw_notification
+                "rawNotificationText": donation.raw_notification
             }
             
-            # Отправляем
-            result = await self.api_client.send_donation(api_data, self.api_token)
+            # Отправляем на Backend
+            result = await self.api_client.send_donation(api_data, device_token)
             
-            return result.get("success", False)
+            # Проверяем результат
+            if "error" in result:
+                logger.error(f"❌ Ошибка отправки доната: {result['error']}")
+                
+                # Если ошибка 429 (лимит) или 401/402 (токен) - логируем отдельно
+                if "лимит" in result['error'].lower() or "limit" in result['error'].lower():
+                    logger.warning(f"⚠️ Достигнут лимит донатов для FREE тарифа")
+                
+                return False
+            
+            # Успешно отправлено
+            logger.info(f"✅ Донат отправлен на Backend: {donation.amount}₸ от {donation.sender_name}")
+            return True
             
         except Exception as e:
             logger.exception(f"Ошибка отправки на API: {e}")

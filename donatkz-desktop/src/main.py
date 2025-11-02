@@ -10,6 +10,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 from config import Config
 from utils.logger import setup_logger
 from ui.main_window import DonatKZApp
+from ui.pairing_window import PairingWindow
+from device.device_manager import DeviceManager
 from database.db_manager import DatabaseManager
 
 # Настройка логирования
@@ -38,6 +40,40 @@ def main():
         # Инициализируем БД ДО создания GUI
         db_manager = DatabaseManager(Config.DONATIONS_DB_FILE)
         logger.info(f"✅ БД инициализирована: {Config.DONATIONS_DB_FILE}")
+        
+        # Создаём DeviceManager для проверки привязки
+        device_manager = DeviceManager(db_manager)
+        
+        # Проверяем привязку устройства
+        if not device_manager.is_paired():
+            logger.info("⚠️ Устройство не привязано, показываем окно привязки...")
+            # Создаём временное окно для pairing window
+            temp_root = tk.Tk()
+            
+            # Создаём окно привязки
+            pairing_complete = False
+            
+            def on_pair_success():
+                nonlocal pairing_complete
+                pairing_complete = True
+                logger.info("✅ Устройство успешно привязано")
+            
+            def on_cancel():
+                logger.info("❌ Привязка отменена пользователем")
+                temp_root.quit()
+                sys.exit(0)
+            
+            pairing_window = PairingWindow(temp_root, on_pair_success, on_cancel)
+            pairing_window.show()
+            
+            # Запускаем mainloop временного окна
+            temp_root.mainloop()
+            
+            if not pairing_complete:
+                logger.info("Приложение закрыто - привязка не завершена")
+                return
+            
+            temp_root.destroy()
         
         logger.info("Создание главного окна Tkinter...")
         # Создаём главное окно Tkinter

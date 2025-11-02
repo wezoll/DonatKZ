@@ -69,6 +69,14 @@ class DatabaseManager:
                     )
                 """)
                 
+                # Создаём таблицу settings для устройства
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS settings (
+                        key    TEXT PRIMARY KEY,
+                        value  TEXT
+                    )
+                """)
+                
                 # Индексы для быстрого поиска
                 cursor.execute("""
                     CREATE INDEX IF NOT EXISTS idx_donations_weekly_week 
@@ -501,6 +509,98 @@ class DatabaseManager:
         """Закрытие БД (если нужно явное закрытие)"""
         logger.debug("DatabaseManager закрыт")
 
+    def set_setting(self, key: str, value: str) -> bool:
+        """
+        Сохранение настройки в БД
+        
+        Args:
+            key: Ключ настройки
+            value: Значение настройки
+            
+        Returns:
+            bool: True если успешно сохранено
+        """
+        try:
+            with self.lock:
+                conn = sqlite3.connect(str(self.db_file), timeout=30)
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    INSERT OR REPLACE INTO settings (key, value)
+                    VALUES (?, ?)
+                """, (key, value))
+                
+                conn.commit()
+                conn.close()
+                
+                logger.debug(f"Настройка сохранена: {key}")
+                return True
+                
+        except Exception as e:
+            logger.exception(f"❌ Ошибка сохранения настройки: {e}")
+            return False
+    
+    def get_setting(self, key: str, default: Optional[str] = None) -> Optional[str]:
+        """
+        Получение настройки из БД
+        
+        Args:
+            key: Ключ настройки
+            default: Значение по умолчанию
+            
+        Returns:
+            str: Значение настройки или default
+        """
+        try:
+            with self.lock:
+                conn = sqlite3.connect(str(self.db_file), timeout=30)
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    SELECT value FROM settings WHERE key = ?
+                """, (key,))
+                
+                row = cursor.fetchone()
+                conn.close()
+                
+                if row:
+                    return row[0]
+                else:
+                    return default
+                    
+        except Exception as e:
+            logger.exception(f"❌ Ошибка получения настройки: {e}")
+            return default
+    
+    def delete_setting(self, key: str) -> bool:
+        """
+        Удаление настройки из БД
+        
+        Args:
+            key: Ключ настройки
+            
+        Returns:
+            bool: True если успешно удалено
+        """
+        try:
+            with self.lock:
+                conn = sqlite3.connect(str(self.db_file), timeout=30)
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    DELETE FROM settings WHERE key = ?
+                """, (key,))
+                
+                conn.commit()
+                conn.close()
+                
+                logger.debug(f"Настройка удалена: {key}")
+                return True
+                
+        except Exception as e:
+            logger.exception(f"❌ Ошибка удаления настройки: {e}")
+            return False
+    
     @staticmethod
     def _generate_content_hash(sender: str, amount: int, message: Optional[str]) -> str:
         """
