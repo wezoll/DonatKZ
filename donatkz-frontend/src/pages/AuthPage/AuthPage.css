@@ -1,0 +1,330 @@
+/* ===== AUTH PAGE ===== */
+.auth-page {
+    background-color: #050605;
+    padding: 60px 40px;
+    min-height: auto;
+}
+
+.auth-container {
+    background-color: #050605;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+    position: relative;
+}
+
+.auth-card {
+    background-color: #050605;
+    border-radius: 8px;
+    padding: 3rem 2rem;
+    max-width: 500px;
+    width: 100%;
+    border: 1px solid #1c1c1c;
+}
+
+.auth-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    text-align: center;
+    color: #ffffff;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.form-group label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.form-input {
+    padding: 0.75rem 1rem;
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #88b702;
+    background-color: #0f0f0f;
+}
+
+.form-input::placeholder {
+    color: #666666;
+}
+
+.form-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.forgot-btn {
+    background: none;
+    border: none;
+    color: #88b702;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: opacity 0.3s ease;
+    text-decoration: none;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.forgot-btn:hover {
+    opacity: 0.8;
+}
+
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper .form-input {
+    width: 100%;
+    padding-right: 3rem;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #999999;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.password-toggle:hover {
+    color: #ffffff;
+}
+
+.form-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.form-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    cursor: pointer;
+    accent-color: #88b702;
+    flex-shrink: 0;
+}
+
+.form-checkbox label {
+    color: #b3b3b3;
+    line-height: 1.5;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.form-checkbox a {
+    color: #88b702;
+    text-decoration: none;
+}
+
+.form-checkbox a:hover {
+    text-decoration: underline;
+}
+
+.btn-auth-submit {
+    padding: 0.75rem 1.5rem;
+    background-color: #88b702;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+    margin-top: 0.5rem;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.btn-auth-submit:hover {
+    opacity: 0.9;
+}
+
+.btn-auth-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.error-message {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.875rem;
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    text-align: left;
+    line-height: 1.5;
+}
+
+.auth-links {
+    text-align: center;
+    font-size: 0.875rem;
+    color: #b3b3b3;
+}
+
+.auth-links p {
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.link-btn {
+    background: none;
+    border: none;
+    color: #88b702;
+    cursor: pointer;
+    font-weight: 600;
+    transition: opacity 0.3s ease;
+    text-decoration: none;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.875rem;
+    padding: 0;
+}
+
+.link-btn:hover {
+    opacity: 0.8;
+}
+
+/* ===== EMAIL VERIFICATION NOTICE ===== */
+.email-verification-notice {
+    background: linear-gradient(135deg, #88b702 0%, #6a8f02 100%);
+    border: 1px solid #9ac503;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+.email-verification-notice-content {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.email-verification-notice-icon {
+    font-size: 1.75rem;
+    flex-shrink: 0;
+}
+
+.email-verification-notice-text {
+    flex: 1;
+}
+
+.email-verification-notice-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+}
+
+.email-verification-notice-description {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.875rem;
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.5;
+    opacity: 0.95;
+}
+
+.email-verification-notice-email {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    margin: 0 0 0.75rem 0;
+    display: inline-block;
+}
+
+.email-verification-notice-tip {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.8125rem;
+    color: #ffffff;
+    margin: 0;
+    opacity: 0.9;
+}
+
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 2rem 1.5rem;
+    }
+
+    .auth-title {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-form {
+        gap: 1.25rem;
+    }
+
+    .email-verification-notice {
+        padding: 1.25rem;
+    }
+
+    .email-verification-notice-content {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .email-verification-notice-icon {
+        font-size: 1.5rem;
+    }
+}

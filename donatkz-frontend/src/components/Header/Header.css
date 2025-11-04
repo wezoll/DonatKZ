@@ -1,0 +1,359 @@
+.header {
+    background-color: #050605;
+    border-bottom: 1px solid #1c1c1c;
+    padding: 2rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+.header.shrink {
+    padding: 0.75rem 0;
+}
+
+.header.shrink .logo-text {
+    font-size: 16px;
+}
+
+.header.shrink .logo-img {
+    width: 24px;
+    height: 24px;
+}
+
+.header.shrink .nav-link {
+    font-size: 12px;
+}
+
+.header.shrink .btn {
+    padding: 8px 16px;
+    font-size: 12px;
+}
+
+.header.shrink .user-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+}
+.dropdown-icon-img-1 {
+    filter: brightness(0) saturate(100%) invert(59%) sepia(98%) saturate(2449%) hue-rotate(329deg) brightness(101%) contrast(101%);
+}
+.header-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: auto;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.logo-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.logo-text {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+}
+
+.header-nav {
+    display: flex;
+    gap: 32px;
+    flex: 1;
+    margin-left: 60px;
+    align-items: center;
+}
+
+.nav-link {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #b3b3b3;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    letter-spacing: 0.5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.nav-link:hover {
+    color: #88b702;
+}
+
+.header-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.btn {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.btn-login {
+    background-color: #ffffff;
+    color: #88b702;
+    min-width: 130px;
+    justify-content: center;
+    height: 40px;
+}
+
+.btn-login:hover {
+    background-color: #f0f0f0;
+    transform: translateY(-2px);
+}
+
+.btn-download {
+    background-color: #88b702;
+    color: #ffffff;
+    min-width: 160px;
+    justify-content: center;
+    height: 40px;
+}
+
+.btn-download:hover {
+    background-color: #76a300;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(136, 183, 2, 0.3);
+}
+
+/* User Profile Styles */
+.user-profile-container {
+    position: relative;
+}
+
+.user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #88b702 0%, #6d9102 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid #88b702;
+}
+
+.user-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(136, 183, 2, 0.4);
+}
+
+.avatar-initials {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    min-width: 260px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-header {
+    padding: 20px;
+    background: linear-gradient(135deg, #1f1f1f 0%, #1a1a1a 100%);
+}
+
+.dropdown-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dropdown-name {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.dropdown-email {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    color: #888888;
+}
+
+.dropdown-tier {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: #88b702;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+    padding: 4px 8px;
+    background-color: rgba(136, 183, 2, 0.1);
+    border-radius: 4px;
+    display: inline-block;
+    width: fit-content;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: #2a2a2a;
+    margin: 8px 0;
+}
+
+.dropdown-item {
+    width: 100%;
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #b3b3b3;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dropdown-item span {
+    font-size: 16px;
+}
+
+.dropdown-icon {
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    filter: brightness(0) saturate(100%) invert(79%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(92%) contrast(91%);
+}
+
+.dropdown-item:hover .dropdown-icon {
+    opacity: 1;
+    filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
+}
+
+.dropdown-item:hover {
+    background-color: #2a2a2a;
+    color: #ffffff;
+}
+
+.dropdown-item.logout {
+    color: #ff4444;
+}
+
+.dropdown-item.logout .dropdown-icon {
+    filter: brightness(0) saturate(100%) invert(42%) sepia(97%) saturate(3429%) hue-rotate(342deg) brightness(103%) contrast(102%);
+}
+
+.dropdown-item.logout:hover {
+    background-color: rgba(255, 68, 68, 0.1);
+    color: #ff6666;
+}
+
+.dropdown-item.logout:hover .dropdown-icon {
+    filter: brightness(0) saturate(100%) invert(42%) sepia(97%) saturate(3429%) hue-rotate(342deg) brightness(110%) contrast(102%);
+}
+
+.loading-spinner {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    color: #888888;
+    padding: 12px 24px;
+}
+
+@media (max-width: 1024px) {
+    .header-nav {
+        margin-left: 40px;
+        gap: 24px;
+    }
+
+    .nav-link {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 0 20px;
+    }
+
+    .header-container {
+        height: auto;
+        padding: 12px 0;
+    }
+
+    .header-nav {
+        display: none;
+    }
+
+    .btn {
+        padding: 10px 16px;
+        font-size: 12px;
+    }
+
+    .btn-download,
+    .btn-login {
+        min-width: auto;
+    }
+
+    .user-avatar-1 {
+        width: 40px;
+        height: 40px;
+    }
+
+    .avatar-initials {
+        font-size: 14px;
+    }
+
+    .profile-dropdown {
+        min-width: 240px;
+        right: -20px;
+    }
+}

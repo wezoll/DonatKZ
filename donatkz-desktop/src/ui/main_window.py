@@ -9,11 +9,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from .dashboard_tab import DashboardTab
-from .settings_tab import SettingsTab
-from .logs_tab import LogsTab
 from .notification_integration import NotificationIntegration
 from core.pipeline_manager import PipelineManager
-from auth import AuthManager, LoginWindow
 from tray import TrayManager, PhoneLinkMonitor
 from config import Config
 
@@ -45,8 +42,6 @@ class DonatKZApp:
         self.last_activity = time.time()
         
         # Инициализируем переменные
-        self.login_window = None
-        
         # Логируем инициализацию
         logger.info("Инициализация главного окна...")
         
@@ -63,14 +58,63 @@ class DonatKZApp:
         self._center_window()
         logger.info("Окно отцентровано")
         
-        # Настройка иконки (если есть)
-        logger.info("Настройка иконки...")
-        try:
-            # self.root.iconbitmap("assets/icon.ico")
-            pass
-        except Exception as e:
-            logger.warning(f"Не удалось загрузить иконку: {e}")
+        # Настройка иконки окна
+        logger.info("Настройка иконки окна...")
+        self._set_window_icon()
         logger.info("Иконка настроена")
+    
+    def _set_window_icon(self):
+        """Установка иконки окна из PNG файла"""
+        try:
+            from pathlib import Path
+            from PIL import Image
+            import tempfile
+            
+            logo_path = Config.LOGO_PATH
+            
+            if not logo_path.exists():
+                logger.debug(f"Логотип не найден: {logo_path}")
+                return
+            
+            # Загружаем PNG
+            try:
+                logo_image = Image.open(logo_path)
+                
+                # Конвертируем PNG в ICO для Windows
+                # Создаём временный ICO файл
+                with tempfile.NamedTemporaryFile(suffix='.ico', delete=False) as tmp_file:
+                    ico_path = tmp_file.name
+                    
+                    # Масштабируем изображение до основного размера (256x256)
+                    main_size = (256, 256)
+                    if logo_image.size != main_size:
+                        logo_image = logo_image.resize(main_size, Image.Resampling.LANCZOS)
+                    
+                    # Конвертируем в RGBA если нужно
+                    if logo_image.mode != 'RGBA':
+                        logo_image = logo_image.convert('RGBA')
+                    
+                    # Сохраняем как ICO (PIL автоматически создаст несколько размеров)
+                    logo_image.save(ico_path, format='ICO')
+                
+                # Устанавливаем иконку через iconbitmap (работает на Windows)
+                self.root.iconbitmap(ico_path)
+                
+                # Удаляем временный файл после установки (через небольшую задержку)
+                def cleanup():
+                    try:
+                        Path(ico_path).unlink()
+                    except:
+                        pass
+                self.root.after(1000, cleanup)  # Удаляем через 1 секунду
+                
+                logger.info(f"✅ Иконка окна установлена из {logo_path.name}")
+                    
+            except Exception as e:
+                logger.warning(f"Не удалось установить иконку: {e}")
+                
+        except Exception as e:
+            logger.warning(f"Ошибка установки иконки окна: {e}")
         
         # Создаём интерфейс
         logger.info("📋 Создаём header...")
@@ -88,15 +132,12 @@ class DonatKZApp:
         # Инициализируем компоненты напрямую
         logger.info("🔧 ИНИЦИАЛИЗАЦИЯ КОМПОНЕНТОВ...")
         
-        # Инициализируем AuthManager
-        self.auth_manager = AuthManager()
-        
         # Инициализируем PhoneLinkMonitor
         self.phone_link_monitor = PhoneLinkMonitor()
         
         # Инициализируем TrayManager
         self.tray_manager = TrayManager(
-            self.root,
+            main_window=self,
             on_show=self._on_tray_show,
             on_hide=self._on_tray_hide,
             on_quit=self._on_tray_quit
@@ -129,6 +170,14 @@ class DonatKZApp:
         # Загружаем информацию о пользователе из БД
         logger.info("👤 Загружаем информацию о пользователе...")
         self.root.after(500, self._load_user_info_from_db)
+    
+    def _load_initial_stats(self):
+        """Загрузить начальную статистику с API"""
+        try:
+            logger.info("📊 Загружаем начальную статистику с Backend...")
+            self.dashboard_tab._load_stats_from_api()
+        except Exception as e:
+            logger.exception(f"❌ Ошибка загрузки начальной статистики: {e}")
         
         logger.info("Главное окно инициализировано")
     
@@ -174,15 +223,6 @@ class DonatKZApp:
         )
         self.user_label.pack(side=tk.LEFT, padx=5)
         
-        # Кнопка настроек (справа)
-        self.settings_button = ttk.Button(
-            header_frame,
-            text="⚙️",
-            width=3,
-            command=self._open_settings
-        )
-        self.settings_button.pack(side=tk.RIGHT, padx=5)
-        
         # Индикатор Phone Link
         self.phone_link_label = ttk.Label(
             header_frame,
@@ -191,15 +231,6 @@ class DonatKZApp:
             foreground="orange"
         )
         self.phone_link_label.pack(side=tk.RIGHT, padx=10)
-        
-        # Кнопка авторизации
-        self.auth_button = ttk.Button(
-            header_frame,
-            text="🔑",
-            width=3,
-            command=self._show_login
-        )
-        self.auth_button.pack(side=tk.RIGHT, padx=5)
         
         # Кнопка запуска/остановки слушателя
         self.listener_button = ttk.Button(
@@ -220,18 +251,16 @@ class DonatKZApp:
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        # Создаём вкладки
+        # Создаём вкладку Dashboard
         self.dashboard_tab = DashboardTab(self.notebook)
-        self.settings_tab = SettingsTab(self.notebook)
-        self.logs_tab = LogsTab(self.notebook)
+        # Устанавливаем ссылку на главное приложение
+        self.dashboard_tab.set_gui_app(self)
         
-        # Добавляем вкладки в Notebook
+        # Добавляем вкладку в Notebook
         self.notebook.add(self.dashboard_tab.frame, text="📊 Dashboard")
-        self.notebook.add(self.settings_tab.frame, text="⚙️ Настройки")
-        self.notebook.add(self.logs_tab.frame, text="📋 Логи")
         
-        # Биндим событие смены вкладки
-        self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
+        # Загружаем статистику с API после инициализации
+        self.root.after(2000, self._load_initial_stats)
     
     def _create_statusbar(self):
         """Создание статус бара внизу окна"""
@@ -261,47 +290,6 @@ class DonatKZApp:
         )
         self.donation_counter.pack(side=tk.RIGHT, padx=5)
     
-    def _open_settings(self):
-        """Открытие вкладки настроек"""
-        self.notebook.select(1)  # Индекс вкладки Settings
-    
-    def _show_login(self):
-        """Показать окно авторизации"""
-        if self.login_window is None or not self.login_window.window.winfo_exists():
-            self.login_window = LoginWindow(
-                parent=self.root,
-                auth_manager=self.auth_manager,
-                on_success=self._on_login_success,
-                on_cancel=self._on_login_cancel
-            )
-        else:
-            self.login_window.show()
-    
-    def _on_login_success(self):
-        """Обработка успешной авторизации"""
-        try:
-            # Получаем информацию о пользователе
-            user_info = self.auth_manager.get_user_info()
-            if user_info:
-                email = user_info.get("email", "Пользователь")
-                self.update_user_email(email)
-                self.add_log_message("INFO", f"✅ Авторизация успешна: {email}")
-            
-            # Обновляем статус
-            self.update_status("Авторизован", "green")
-            
-            # Инициализируем pipeline если нужно
-            if self.pipeline_manager is None:
-                self._initialize_pipeline_async()
-            
-        except Exception as e:
-            logger.exception(f"Ошибка обработки успешной авторизации: {e}")
-            self.add_log_message("ERROR", f"❌ Ошибка авторизации: {e}")
-    
-    def _on_login_cancel(self):
-        """Обработка отмены авторизации"""
-        self.add_log_message("INFO", "ℹ️ Авторизация отменена")
-    
     def _initialize_pipeline_async(self):
         """Асинхронная инициализация pipeline"""
         import threading
@@ -325,19 +313,11 @@ class DonatKZApp:
             self.pipeline_manager.stop()
             self.listener_button.config(text="🔍")
             self.add_log_message("INFO", "⏹️ Слушатель остановлен")
+            # Обновляем статус в трее
+            if self.tray_manager:
+                self.tray_manager.update_listener_status("Остановлен")
         else:
-            # Получаем настройку Mock режима из настроек
-            try:
-                use_mock = self.settings_tab.mock_api_check.var.get()
-                self.add_log_message("DEBUG", f"🔍 Получена настройка use_mock: {use_mock}")
-            except Exception as e:
-                # Если не удалось получить настройку, используем по умолчанию False (Real режим)
-                use_mock = False
-                self.add_log_message("WARNING", f"⚠️ Ошибка получения настройки: {e}, используем Real режим")
-            
-            # Запускаем с правильным режимом (используем pipeline_manager вместо notification_integration!)
-            self.add_log_message("DEBUG", f"🔍 Запускаем pipeline с use_mock={use_mock}")
-            self.pipeline_manager.use_mock_listener = use_mock
+            # Режим Real (единственный доступный)
             
             # Инициализируем pipeline если нужно
             if not self.pipeline_manager.donation_pipeline:
@@ -345,24 +325,17 @@ class DonatKZApp:
             else:
                 self.pipeline_manager.start()
                 self.listener_button.config(text="⏹️")
+                # Обновляем статус в трее
+                if self.tray_manager:
+                    self.tray_manager.update_listener_status("Запущен")
             
-            # Логируем режим
-            mode = "Mock" if use_mock else "Real"
-            self.add_log_message("INFO", f"🔍 Слушатель запущен в режиме: {mode}")
-            
-            # Если Real режим, предупреждаем о Phone Link
-            if not use_mock:
-                self.add_log_message("WARNING", "⚠️ Убедитесь что Phone Link активен и подключен к телефону!")
+            logger.info("🔍 Слушатель запущен в режиме: Real")
 
     async def initialize_full_pipeline(self):
         """Инициализация полного pipeline"""
         try:
             if self.pipeline_manager is None:
-                self.pipeline_manager = PipelineManager(
-                    gui_app=self,
-                    use_mock_listener=True,
-                    use_mock_api=True
-                )
+                self.pipeline_manager = PipelineManager(gui_app=self)
                 
                 await self.pipeline_manager.initialize()
                 
@@ -482,16 +455,6 @@ class DonatKZApp:
         # Используем root.after() для thread-safe обновления GUI
         self.root.after(0, lambda: self._on_phone_link_status_change(status))
     
-    def _on_tab_changed(self, event):
-        """
-        Обработчик смены вкладки
-        
-        Args:
-            event: Событие смены вкладки
-        """
-        current_tab = self.notebook.select()
-        tab_text = self.notebook.tab(current_tab, "text")
-        logger.debug(f"Переключение на вкладку: {tab_text}")
     
     def _check_initial_phone_link_status(self):
         """Проверка начального статуса Phone Link при запуске"""
@@ -548,6 +511,9 @@ class DonatKZApp:
             
             if self.pipeline_manager:
                 self.pipeline_manager.stop()
+                # Обновляем статус в трее
+                if self.tray_manager:
+                    self.tray_manager.update_listener_status("Остановлен")
             
             if self.phone_link_monitor:
                 self.phone_link_monitor.stop()
@@ -568,9 +534,6 @@ class DonatKZApp:
             
             # Инициализируем AuthManager
             logger.info("🔧 Инициализация AuthManager...")
-            self.auth_manager = AuthManager()
-            logger.info("✅ AuthManager инициализирован")
-            
             # Инициализируем PhoneLinkMonitor
             logger.info("🔧 Инициализация PhoneLinkMonitor...")
             self.phone_link_monitor = PhoneLinkMonitor()
@@ -759,13 +722,14 @@ class DonatKZApp:
     
     def add_log_message(self, level: str, message: str):
         """
-        Добавить лог сообщение
+        Добавить лог сообщение (legacy метод для обратной совместимости)
         
         Args:
             level: Уровень (INFO, WARNING, ERROR)
             message: Текст сообщения
         """
-        self.logs_tab.add_log(level, message)
+        # Просто логируем в файл, GUI логов больше нет
+        logger.log(getattr(logging, level, logging.INFO), message)
     
     def _auto_start_listener(self):
         """Автоматический запуск слушателя уведомлений после инициализации"""
@@ -773,9 +737,7 @@ class DonatKZApp:
             logger.info("🚀 Автозапуск слушателя уведомлений...")
             self.add_log_message("INFO", "🚀 Автозапуск слушателя...")
             
-            # Устанавливаем режимы - ВСЕГДА Real режим для продакшена
-            self.pipeline_manager.use_mock_listener = False  # Real слушатель
-            self.pipeline_manager.use_mock_api = False  # Real API
+            # Режим Real (единственный доступный)
             
             # Инициализируем и запускаем pipeline
             self._initialize_and_start_pipeline()
@@ -837,6 +799,10 @@ class DonatKZApp:
                     logger.info("✅ Pipeline запущен!")
                     self.add_log_message("INFO", "✅ Pipeline запущен!")
                     
+                    # Обновляем статус в трее
+                    if self.tray_manager:
+                        self.tray_manager.update_listener_status("Запущен")
+                    
                     # Проверяем что слушатель действительно запущен
                     if self.pipeline_manager.notification_listener:
                         listener_running = getattr(self.pipeline_manager.notification_listener, 'is_running', False)
@@ -846,9 +812,13 @@ class DonatKZApp:
                         if not listener_running:
                             logger.error("❌ Слушатель создан, но НЕ запущен!")
                             self.add_log_message("ERROR", "❌ Слушатель создан, но НЕ запущен!")
+                            if self.tray_manager:
+                                self.tray_manager.update_listener_status("Ошибка")
                     else:
                         logger.error("❌ Notification Listener не создан!")
                         self.add_log_message("ERROR", "❌ Notification Listener не создан!")
+                        if self.tray_manager:
+                            self.tray_manager.update_listener_status("Ошибка")
                 else:
                     logger.error("❌ Не удалось запустить Pipeline!")
                     self.add_log_message("ERROR", "❌ Не удалось запустить Pipeline!")

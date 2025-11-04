@@ -1,0 +1,161 @@
+/* Основной контейнер виджета - полностью прозрачный для OBS */
+.widget-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Ошибка */
+.widget-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 0, 0, 0.9);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Алерт доната - ПРОСТО GIF + ТЕКСТ БЕЗ ФОНА */
+.donation-alert {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  background: transparent;
+  padding: 0;
+  max-width: 900px;
+  opacity: 0;
+  pointer-events: auto;
+}
+
+/* Анимация появления */
+.donation-alert.show {
+  animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+/* GIF контейнер - БЕЗ ФОНА */
+.donation-gif {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.donation-gif img {
+  width: auto;
+  max-width: 600px;
+  height: auto;
+  max-height: 400px;
+  object-fit: contain;
+  border-radius: 16px;
+}
+
+/* Контент доната - ПРОСТО ТЕКСТ БЕЗ ФОНА */
+.donation-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: transparent;
+  padding: 0;
+  text-align: center;
+  max-width: 800px;
+}
+
+/* Заголовок (имя + сумма) - стили устанавливаются динамически */
+.donation-title {
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9),
+               -1px -1px 2px rgba(0, 0, 0, 0.9),
+               1px -1px 2px rgba(0, 0, 0, 0.9),
+               -1px 1px 2px rgba(0, 0, 0, 0.9),
+               1px 1px 2px rgba(0, 0, 0, 0.9);
+  animation: fadeInUp 0.4s ease-out 0.2s both;
+}
+
+/* Сообщение - стили устанавливаются динамически */
+.donation-message {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9),
+               -1px -1px 2px rgba(0, 0, 0, 0.9),
+               1px -1px 2px rgba(0, 0, 0, 0.9),
+               -1px 1px 2px rgba(0, 0, 0, 0.9),
+               1px 1px 2px rgba(0, 0, 0, 0.9);
+  line-height: 1.5;
+  animation: fadeInUp 0.4s ease-out 0.4s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Адаптивность для разных разрешений */
+@media (max-width: 1280px) {
+  .donation-alert {
+    max-width: 700px;
+  }
+
+  .donation-gif img {
+    max-width: 500px;
+    max-height: 350px;
+  }
+
+  .donation-content {
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 768px) {
+  .donation-alert {
+    max-width: 500px;
+  }
+
+  .donation-gif img {
+    max-width: 400px;
+    max-height: 300px;
+  }
+
+  .donation-content {
+    max-width: 400px;
+  }
+}
+

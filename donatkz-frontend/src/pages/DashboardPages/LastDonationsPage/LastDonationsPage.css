@@ -1,0 +1,374 @@
+.last-donations-page {
+  padding: 30px;
+  background-color: #1a1a1a;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* ===== СТАТИСТИКА ===== */
+.donations-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background-color: #1c1c1c;
+  border: 1px solid #252525;
+  border-radius: 16px;
+  padding: 25px;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  border-color: #88b702;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(136, 183, 2, 0.1);
+}
+
+.stat-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-card-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.stat-card-value-green {
+  color: #88b702;
+}
+
+/* ===== ФИЛЬТРЫ ===== */
+.donations-filters-section {
+  background-color: #1c1c1c;
+  border: 1px solid #252525;
+  border-radius: 16px;
+  padding: 25px;
+  margin-bottom: 30px;
+}
+
+.filters-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 20px 0;
+}
+
+.filters-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 15px;
+  align-items: center;
+}
+
+/* Поиск */
+.filter-search {
+  position: relative;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  pointer-events: none;
+}
+
+.filter-search-input {
+  width: 100%;
+  background-color: #252525;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 14px 16px 14px 48px;
+  font-size: 14px;
+  color: #fff;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.filter-search-input::placeholder {
+  color: #666;
+}
+
+.filter-search-input:focus {
+  outline: none;
+  border-color: #88b702;
+  background-color: #2a2a2a;
+}
+
+/* Dropdown фильтры */
+.filter-dropdown-container {
+  position: relative;
+}
+
+.filter-dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #252525;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.filter-dropdown-btn:hover {
+  border-color: #88b702;
+  background-color: #2a2a2a;
+}
+
+.filter-dropdown-btn svg {
+  color: #666;
+}
+
+.dropdown-arrow {
+  margin-left: auto;
+  transition: transform 0.2s;
+}
+
+.filter-dropdown-btn:hover .dropdown-arrow {
+  color: #88b702;
+}
+
+.filter-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background-color: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 8px;
+  min-width: 200px;
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.filter-dropdown-option {
+  width: 100%;
+  background: none;
+  border: none;
+  color: #fff;
+  padding: 12px 16px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.filter-dropdown-option:hover {
+  background-color: rgba(136, 183, 2, 0.1);
+  color: #88b702;
+}
+
+.filter-dropdown-option.active {
+  background-color: #88b702;
+  color: #1a1a1a;
+}
+
+/* ===== СПИСОК ДОНАТОВ ===== */
+.donations-list-section {
+  background-color: #1c1c1c;
+  border: 1px solid #252525;
+  border-radius: 16px;
+  padding: 25px;
+}
+
+.donations-list-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 20px 0;
+}
+
+.donations-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.donation-card-full {
+  background-color: #252525;
+  border-radius: 12px;
+  padding: 20px;
+  border-left: 3px solid #88b702;
+  transition: all 0.2s;
+}
+
+.donation-card-full:hover {
+  background-color: #2a2a2a;
+  transform: translateX(3px);
+  box-shadow: 0 4px 12px rgba(136, 183, 2, 0.1);
+}
+
+.donation-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 15px;
+}
+
+.donation-card-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #88b702;
+}
+
+.donation-card-time {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.donation-card-amount {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.donation-card-message {
+  font-size: 14px;
+  color: #888;
+  line-height: 1.5;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-state p {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+}
+
+/* Scrollbar */
+.donations-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.donations-list-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.donations-list-container::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+.donations-list-container::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+  .donations-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .filters-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .last-donations-page {
+    padding: 20px;
+  }
+
+  .donations-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    padding: 20px;
+  }
+
+  .stat-card-value {
+    font-size: 28px;
+  }
+
+  .donations-filters-section,
+  .donations-list-section {
+    padding: 20px;
+  }
+
+  .filters-row {
+    gap: 12px;
+  }
+
+  .donation-card-full {
+    padding: 16px;
+  }
+
+  .donation-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .last-donations-page {
+    padding: 15px;
+  }
+
+  .stat-card-title {
+    font-size: 12px;
+  }
+
+  .stat-card-value {
+    font-size: 24px;
+  }
+
+  .filters-title,
+  .donations-list-title {
+    font-size: 16px;
+  }
+
+  .filter-search-input {
+    padding: 12px 14px 12px 44px;
+  }
+
+  .filter-dropdown-btn {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  .donation-card-name {
+    font-size: 14px;
+  }
+
+  .donation-card-amount {
+    font-size: 14px;
+  }
+
+  .donation-card-message {
+    font-size: 13px;
+  }
+}

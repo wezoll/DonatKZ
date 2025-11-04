@@ -177,13 +177,43 @@ class DonatKZAPI(BaseAPIClient):
         """
         raise NotImplementedError("Real API client will be implemented in Stage 8")
     
-    async def get_stats(self, access_token: str, date: Optional[datetime] = None) -> Dict[str, Any]:
+    async def get_donations_stats(self, access_token: str) -> Dict[str, Any]:
         """
         Получение статистики донатов
         
-        TODO: Реализация в Этапе 8
+        Args:
+            access_token: Device Token
+            
+        Returns:
+            dict: Статистика донатов или ошибка
         """
-        raise NotImplementedError("Real API client will be implemented in Stage 8")
+        try:
+            await self._ensure_session()
+            
+            url = f"{self.base_url}/api/donations/stats"
+            headers = {"Authorization": f"Bearer {access_token}"}
+            
+            async with self.session.get(url, headers=headers) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    logger.info("✅ Статистика получена с Backend")
+                    return result
+                else:
+                    error_data = await response.json()
+                    logger.warning(f"⚠️ Ошибка получения статистики: {error_data.get('message')}")
+                    return {"error": error_data.get("message", "Неизвестная ошибка")}
+                    
+        except Exception as e:
+            logger.exception(f"❌ Ошибка получения статистики: {e}")
+            return {"error": str(e)}
+    
+    async def get_stats(self, access_token: str, date: Optional[datetime] = None) -> Dict[str, Any]:
+        """
+        Получение статистики донатов (legacy метод)
+        
+        Использует get_donations_stats
+        """
+        return await self.get_donations_stats(access_token)
     
     async def ping(self) -> Dict[str, Any]:
         """

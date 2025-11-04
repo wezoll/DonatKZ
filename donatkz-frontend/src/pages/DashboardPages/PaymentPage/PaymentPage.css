@@ -1,0 +1,334 @@
+.payment-page {
+  padding: 30px;
+  background-color: #1a1a1a;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.payment-form-section {
+  background-color: #1c1c1c;
+  border: 1px solid #252525;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.payment-form-header {
+  padding: 25px 30px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-bottom: 1px solid #252525;
+}
+
+.payment-form-header svg {
+  color: #88b702;
+}
+
+.payment-form-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.payment-form-body {
+  padding: 30px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label-payment {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.form-select,
+.form-input-payment {
+  width: 100%;
+  background-color: #252525;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+  color: #fff;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.form-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="%23888" d="M3 5l3 3 3-3"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+
+.form-select:focus,
+.form-input-payment:focus {
+  outline: none;
+  border-color: #88b702;
+  background-color: #2a2a2a;
+}
+
+.form-input-payment::placeholder {
+  color: #666;
+}
+
+/* ===== FILE UPLOAD ===== */
+.file-upload-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.file-upload-input {
+  display: none;
+}
+
+.file-upload-label {
+  background-color: #252525;
+  border: 1px solid #2a2a2a;
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.file-upload-label:hover {
+  border-color: #88b702;
+  background-color: rgba(136, 183, 2, 0.1);
+  color: #88b702;
+}
+
+.file-upload-label svg {
+  color: currentColor;
+}
+
+.file-upload-name {
+  font-size: 14px;
+  color: #888;
+  flex: 1;
+}
+
+/* ===== SUBMIT STATUS ===== */
+.submit-status {
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  animation: slideDown 0.3s ease;
+}
+
+.submit-status.success {
+  background-color: rgba(136, 183, 2, 0.1);
+  border: 1px solid #88b702;
+  color: #88b702;
+}
+
+.submit-status.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
+  color: #ef4444;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== PAYMENT TOTAL ===== */
+.payment-total {
+  background-color: #252525;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 20px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.payment-total-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.payment-total-amount {
+  font-size: 24px;
+  font-weight: 700;
+  color: #88b702;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.payment-total-amount svg {
+  color: #88b702;
+}
+
+/* ===== SUBMIT BUTTON ===== */
+.submit-payment-btn {
+  width: 100%;
+  background-color: #88b702;
+  color: #fff;
+  border: none;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.submit-payment-btn:hover {
+  background-color: #a8d72e;
+  transform: translateY(-2px);
+  box-shadow: 0 0 10px rgba(136, 183, 2, 0.5);
+}
+
+/* ===== PAYMENT DETAILS ===== */
+.payment-details-section {
+  background-color: #1c1c1c;
+  border: 1px solid #252525;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.payment-details-header {
+  background: #1c1c1c;
+  padding: 25px 30px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-bottom: 1px solid #252525;
+}
+
+.payment-details-header svg {
+  color: #88b702;
+}
+
+.payment-details-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.payment-details-body {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.payment-detail-item {
+  background-color: #252525;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 20px 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.payment-detail-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #888;
+}
+
+.payment-detail-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+  /* Removed table styles */
+}
+
+@media (max-width: 768px) {
+  .payment-page {
+    padding: 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-form-header,
+  .payment-details-header {
+    padding: 20px;
+  }
+
+  .payment-form-body,
+  .payment-details-body {
+    padding: 20px;
+  }
+
+  .file-upload-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .file-upload-label {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .payment-total {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .payment-page {
+    padding: 15px;
+  }
+
+  .payment-form-title,
+  .payment-details-title {
+    font-size: 18px;
+  }
+
+  .payment-total-amount {
+    font-size: 20px;
+  }
+}

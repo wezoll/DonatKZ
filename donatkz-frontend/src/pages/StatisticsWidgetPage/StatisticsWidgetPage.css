@@ -1,0 +1,119 @@
+/* ===== WIDGET CONTAINER ===== */
+.statistics-widget-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center; /* Центрирование по горизонтали */
+  background: transparent;
+  overflow: hidden;
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+.statistics-widget-container.position-top {
+  align-items: flex-start;
+}
+
+.statistics-widget-container.position-center {
+  align-items: center;
+}
+
+.statistics-widget-container.position-bottom {
+  align-items: flex-end;
+}
+
+/* ===== LIST ===== */
+.statistics-widget-list {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+.widget-header-text {
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.widget-list-item {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  transition: all 0.3s ease;
+}
+
+/* ===== SLIDER ===== */
+.statistics-widget-slider {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+.widget-slider-item {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== TICKER ===== */
+.statistics-widget-ticker {
+  width: 100%;
+  max-width: 100vw;
+  display: flex;
+  flex-direction: column;
+}
+
+.widget-ticker-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.widget-ticker-content {
+  display: flex;
+  white-space: nowrap;
+  animation: ticker linear infinite;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.ticker-item {
+  padding: 0 20px;
+}
+
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ===== ERROR/LOADING STATES ===== */
+.statistics-widget-error,
+.statistics-widget-loading,
+.statistics-widget-empty {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 18px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+}
+
+.statistics-widget-error {
+  color: #ef4444;
+}
+
+.statistics-widget-empty {
+  color: #888;
+}
+

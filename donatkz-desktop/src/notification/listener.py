@@ -40,8 +40,10 @@ class WindowsNotificationListener:
         self.listener = None
         self.total_notifications = 0
         self.filtered_notifications = 0
+        self.listen_task = None  # Задача слушателя для корректной отмены
         
-        # Кэш уже обработанных уведомлений (сохраняется между перезапусками!)
+        # Кэш уже обработанных уведомлений в ТЕКУЩЕЙ СЕССИИ (очищается при перезапуске!)
+        # Дедупликация по времени происходит в pipeline через БД
         self.last_seen = set()
         
         logger.info(f"WindowsNotificationListener инициализирован")
@@ -81,11 +83,21 @@ class WindowsNotificationListener:
         logger.info("Остановка Windows Notification Listener...")
         self.is_running = False
         
-        if self.loop and self.loop.is_running():
-            self.loop.call_soon_threadsafe(self.loop.stop)
+        # Отменяем задачу слушателя правильно
+        if self.loop and not self.loop.is_closed():
+            try:
+                if self.loop.is_running():
+                    # Отменяем задачу через call_soon_threadsafe
+                    def cancel_task():
+                        if self.listen_task and not self.listen_task.done():
+                            self.listen_task.cancel()
+                            logger.debug("Задача слушателя отменена")
+                    self.loop.call_soon_threadsafe(cancel_task)
+            except Exception as e:
+                logger.debug(f"Ошибка отмены задачи: {e}")
         
         if self.thread and self.thread.is_alive():
-            self.thread.join(timeout=2.0)
+            self.thread.join(timeout=3.0)
         
         logger.info("✅ Слушатель остановлен")
     
@@ -96,24 +108,55 @@ class WindowsNotificationListener:
             asyncio.set_event_loop(self.loop)
             
             try:
-                self.loop.run_until_complete(self._listen_notifications())
+                # Создаём задачу слушателя
+                self.listen_task = self.loop.create_task(self._listen_notifications())
+                # Запускаем слушатель до завершения или отмены
+                self.loop.run_until_complete(self.listen_task)
+            except asyncio.CancelledError:
+                logger.debug("Слушатель отменён")
             except Exception as e:
-                logger.warning(f"Ошибка в async слушателе: {e}")
+                if "Event loop stopped" not in str(e):
+                    logger.warning(f"Ошибка в async слушателе: {e}")
+            finally:
+                # Отменяем все оставшиеся задачи
+                try:
+                    pending = [t for t in asyncio.all_tasks(self.loop) if not t.done() and t != self.listen_task]
+                    for task in pending:
+                        task.cancel()
+                    # Ждём отмены всех задач (игнорируем ошибки)
+                    if pending:
+                        try:
+                            self.loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                        except Exception:
+                            pass  # Игнорируем ошибки при отмене
+                except Exception as e:
+                    logger.debug(f"Ошибка отмены задач: {e}")
             
         except Exception as e:
             logger.exception(f"Ошибка в потоке слушателя: {e}")
         finally:
             try:
                 if self.loop and not self.loop.is_closed():
+                    # Даём немного времени на завершение
+                    try:
+                        pending = [t for t in asyncio.all_tasks(self.loop) if not t.done()]
+                        if pending:
+                            self.loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                    except Exception:
+                        pass
                     self.loop.close()
             except Exception as e:
                 logger.debug(f"Ошибка закрытия loop: {e}")
             finally:
                 self.is_running = False
+                self.listen_task = None
     
     async def _listen_notifications(self):
         """Асинхронный слушатель уведомлений"""
         self.is_running = True
+        # Очищаем кэш при запуске - обрабатываем все уведомления заново
+        # Дедупликация происходит в pipeline через БД
+        self.last_seen.clear()
         logger.info("🔍 Начинаем прослушивание уведомлений...")
         
         try:
@@ -127,13 +170,18 @@ class WindowsNotificationListener:
                 return
             
             logger.info("✅ Доступ к уведомлениям получен")
+            logger.info("📋 Обрабатываем ВСЕ уведомления (дедупликация через БД)")
             
-            # Polling режим (используем self.last_seen чтобы кэш сохранялся при перезапусках!)
+            # Polling режим - обрабатываем все уведомления, даже старые
             check_count = 0
             
             logger.info("📱 Ожидание уведомлений от Kaspi...")
             while self.is_running:
                 try:
+                    # Проверяем флаг перед каждой итерацией
+                    if not self.is_running:
+                        break
+                        
                     check_count += 1
                     notifications = await self.listener.get_notifications_async(NotificationKinds.TOAST)
                     
@@ -143,19 +191,15 @@ class WindowsNotificationListener:
                             try:
                                 notif_id = self._generate_notification_id(notification)
                                 
-                                # Проверяем возраст уведомления - игнорируем старые
-                                is_recent = self._is_notification_recent(notification)
-                                if not is_recent:
-                                    logger.debug(f"⏰ Игнорируем старое уведомление (ID: {notif_id[:16]}...)")
-                                    continue
-                                logger.debug(f"✅ Уведомление свежее (ID: {notif_id[:16]}...)")
-                                
+                                # Обрабатываем ВСЕ уведомления, даже старые
+                                # Дедупликация происходит в pipeline через БД
                                 if notif_id not in self.last_seen:
-                                    logger.debug(f"🆕 Новое уведомление: {notif_id[:16]}...")
+                                    logger.debug(f"🆕 Новое уведомление для обработки: {notif_id[:16]}...")
                                     self.last_seen.add(notif_id)
                                     await self._process_notification(notification)
                                 else:
-                                    logger.debug(f"🔁 Уведомление уже обработано: {notif_id[:16]}...")
+                                    # Уже обрабатывали в этой сессии - пропускаем
+                                    logger.debug(f"🔁 Уведомление уже обработано в этой сессии: {notif_id[:16]}...")
                             except Exception as e:
                                 logger.warning(f"⚠️ Ошибка обработки уведомления: {e}")
                     
@@ -165,11 +209,24 @@ class WindowsNotificationListener:
                     if len(self.last_seen) > 200:
                         self.last_seen.clear()
                     
+                except asyncio.CancelledError:
+                    logger.debug("Polling отменён")
+                    break
                 except Exception as e:
                     logger.warning(f"⚠️ Ошибка polling: {e}")
                 
-                await asyncio.sleep(1.0)
+                # Проверяем флаг перед sleep
+                if not self.is_running:
+                    break
+                    
+                try:
+                    await asyncio.sleep(1.0)
+                except asyncio.CancelledError:
+                    logger.debug("Sleep отменён")
+                    break
             
+        except asyncio.CancelledError:
+            logger.debug("Слушатель отменён через CancelledError")
         except Exception as e:
             logger.exception(f"Ошибка в слушателе: {e}")
         finally:
@@ -499,23 +556,11 @@ class WindowsNotificationListener:
         return False
 
 
-class MockNotificationListener:
-    """Заглушка для тестирования"""
-    def __init__(self, callback, **kwargs):
-        self.callback = callback
-    
-    def start(self):
-        return True
-    
-    def stop(self):
-        pass
-
-
-def create_notification_listener(callback, use_mock=False, filter_sources=None, mock_interval=5.0, root_window=None):
-    """Создание слушателя"""
-    if use_mock or not WINSDK_AVAILABLE:
-        logger.info("Используем Mock слушатель")
-        return MockNotificationListener(callback, filter_sources=filter_sources)
+def create_notification_listener(callback, filter_sources=None, root_window=None):
+    """Создание слушателя уведомлений"""
+    if not WINSDK_AVAILABLE:
+        logger.error("❌ winsdk недоступен. Установите: pip install winsdk")
+        raise RuntimeError("winsdk недоступен")
     
     logger.info("Используем Windows слушатель")
     return WindowsNotificationListener(callback, filter_sources=filter_sources, root_window=root_window)

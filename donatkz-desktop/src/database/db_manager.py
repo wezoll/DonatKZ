@@ -600,7 +600,7 @@ class DatabaseManager:
         except Exception as e:
             logger.exception(f"❌ Ошибка удаления настройки: {e}")
             return False
-    
+
     @staticmethod
     def _generate_content_hash(sender: str, amount: int, message: Optional[str]) -> str:
         """

@@ -32,7 +32,7 @@ class Config:
     
     # Donation Limits
     MIN_DONATION_AMOUNT: float = float(os.getenv("MIN_DONATION_AMOUNT", "100"))
-    MAX_DONATION_AMOUNT: float = float(os.getenv("MAX_DONATION_AMOUNT", "1000000"))
+    MAX_DONATION_AMOUNT: float = float(os.getenv("MAX_DONATION_AMOUNT", "2000000"))
     
     # Deduplication
     DEDUPLICATION_WINDOW_SECONDS: int = int(
@@ -42,7 +42,7 @@ class Config:
     
     # Notification Settings
     NOTIFICATION_MAX_AGE_MINUTES: int = int(
-        os.getenv("NOTIFICATION_MAX_AGE_MINUTES", "60")
+        os.getenv("NOTIFICATION_MAX_AGE_MINUTES", "1440")
     )
     
     # Retry Settings
@@ -76,6 +76,9 @@ class Config:
     DONATIONS_DB_FILE: Path = BASE_DIR / "donations.db"
     DONATIONS_DB_TIMEOUT: int = 30
     
+    # Logo/Icon
+    LOGO_PATH: Path = BASE_DIR / "DONATKZ_LOGO.png"
+    
     # Windows Credential Manager
     CREDENTIAL_TARGET_NAME: str = "DonatKZ_Desktop_App"
     
@@ -102,12 +105,6 @@ class Config:
     
     @classmethod
     def is_development(cls) -> bool:
-        """
-        Проверка режима разработки
-        
-        Returns:
-            bool: True если используется Mock API
-        """
         return cls.USE_MOCK_API
     
     @classmethod

@@ -38,18 +38,15 @@ class DonationPipeline:
     
     def __init__(
         self,
-        gui_callback: Optional[Callable[[DonationData], None]] = None,
-        use_mock_api: bool = True
+        gui_callback: Optional[Callable[[DonationData], None]] = None
     ):
         """
         Инициализация pipeline
         
         Args:
             gui_callback: Callback для обновления GUI
-            use_mock_api: Использовать Mock API
         """
         self.gui_callback = gui_callback
-        self.use_mock_api = use_mock_api
         
         # Компоненты pipeline
         self.parser = KaspiNotificationParser()
@@ -91,7 +88,6 @@ class DonationPipeline:
         self.processing_thread = None
         
         logger.info("DonationPipeline инициализирован с DatabaseManager")
-        logger.info(f"Mock API: {use_mock_api}")
     
     async def initialize_api(self, email: str = None, password: str = None):
         """
@@ -103,8 +99,8 @@ class DonationPipeline:
         """
         try:
             # Создаём API клиент
-            logger.info(f"🔧 Создаю API клиент (use_mock={self.use_mock_api})...")
-            self.api_client = create_api_client(use_mock=self.use_mock_api)
+            logger.info("🔧 Создаю API клиент...")
+            self.api_client = create_api_client(use_mock=False)
             
             # Проверяем наличие device_token из БД
             device_token = self.db_manager.get_setting("device_token")

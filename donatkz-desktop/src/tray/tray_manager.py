@@ -93,11 +93,46 @@ class TrayManager:
         logger.info(f"System Tray доступен: {TRAY_AVAILABLE}")
     
     def _create_icons(self):
-        """Создание иконок для трея"""
+        """Создание иконок для трея из логотипа"""
         try:
-            # Размеры иконок
+            from pathlib import Path
+            from config import Config
+            
+            # Размеры иконок для трея
             icon_size = (64, 64)
             
+            logo_path = Config.LOGO_PATH
+            
+            if logo_path.exists():
+                # Загружаем логотип
+                logo_image = Image.open(logo_path)
+                
+                # Конвертируем в RGBA если нужно
+                if logo_image.mode != 'RGBA':
+                    logo_image = logo_image.convert('RGBA')
+                
+                # Масштабируем до нужного размера
+                logo_resized = logo_image.resize(icon_size, Image.Resampling.LANCZOS)
+                
+                # Используем логотип для всех статусов
+                self.icon_images["active"] = logo_resized.copy()
+                self.icon_images["inactive"] = logo_resized.copy()
+                self.icon_images["warning"] = logo_resized.copy()
+                self.icon_images["working"] = logo_resized.copy()
+                
+                logger.info(f"✅ Иконки трея загружены из {logo_path.name}")
+            else:
+                logger.warning(f"Логотип не найден: {logo_path}, используем дефолтные иконки")
+                self._create_default_icons(icon_size)
+            
+        except Exception as e:
+            logger.exception(f"Ошибка создания иконок: {e}")
+            # Fallback - создаём дефолтные иконки
+            self._create_default_icons((64, 64))
+    
+    def _create_default_icons(self, icon_size):
+        """Создание дефолтных иконок (fallback)"""
+        try:
             # Зелёная иконка (активен)
             green_icon = Image.new('RGBA', icon_size, (0, 0, 0, 0))
             green_draw = ImageDraw.Draw(green_icon)
@@ -126,16 +161,16 @@ class TrayManager:
             blue_draw.text((32, 32), "D", fill=(255, 255, 255, 255), anchor="mm")
             self.icon_images["working"] = blue_icon
             
-            logger.debug("Иконки для трея созданы")
+            logger.debug("Дефолтные иконки для трея созданы")
             
         except Exception as e:
-            logger.exception(f"Ошибка создания иконок: {e}")
-            # Создаём простые иконки
+            logger.exception(f"Ошибка создания дефолтных иконок: {e}")
+            # Последний fallback - простые цветные квадраты
             self.icon_images = {
-                "active": Image.new('RGBA', (64, 64), (0, 255, 0, 255)),
-                "inactive": Image.new('RGBA', (64, 64), (255, 0, 0, 255)),
-                "warning": Image.new('RGBA', (64, 64), (255, 255, 0, 255)),
-                "working": Image.new('RGBA', (64, 64), (0, 0, 255, 255))
+                "active": Image.new('RGBA', icon_size, (0, 255, 0, 255)),
+                "inactive": Image.new('RGBA', icon_size, (255, 0, 0, 255)),
+                "warning": Image.new('RGBA', icon_size, (255, 255, 0, 255)),
+                "working": Image.new('RGBA', icon_size, (0, 0, 255, 255))
             }
     
     def start(self):
@@ -240,17 +275,6 @@ class TrayManager:
                 ),
                 pystray.Menu.SEPARATOR,
                 
-                # Настройки
-                item(
-                    "Настройки",
-                    self._on_open_settings
-                ),
-                item(
-                    "Логи",
-                    self._on_open_logs
-                ),
-                pystray.Menu.SEPARATOR,
-                
                 # Выход
                 item(
                     "Выход",
@@ -298,42 +322,50 @@ class TrayManager:
     def _on_start_listener(self, icon=None, item=None):
         """Обработка запуска слушателя"""
         try:
-            if hasattr(self.app_window, 'notification_integration'):
-                self.app_window.notification_integration.start_listener(use_mock=False)
-                self.update_listener_status("Запущен")
-                logger.info("✅ Слушатель запущен из трея")
+            if hasattr(self.app_window, 'pipeline_manager'):
+                if not self.app_window.pipeline_manager.is_running:
+                    # Инициализируем если нужно
+                    if not self.app_window.pipeline_manager.donation_pipeline:
+                        # Нужна асинхронная инициализация - запускаем в отдельном потоке
+                        import threading
+                        import asyncio
+                        
+                        def init_and_start():
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            try:
+                                loop.run_until_complete(self.app_window.pipeline_manager.initialize())
+                                self.app_window.pipeline_manager.start()
+                                self.update_listener_status("Запущен")
+                                logger.info("✅ Слушатель запущен из трея")
+                            except Exception as e:
+                                logger.exception(f"Ошибка запуска слушателя: {e}")
+                            finally:
+                                loop.close()
+                        
+                        thread = threading.Thread(target=init_and_start, daemon=True)
+                        thread.start()
+                    else:
+                        self.app_window.pipeline_manager.start()
+                        self.update_listener_status("Запущен")
+                        logger.info("✅ Слушатель запущен из трея")
+                else:
+                    logger.info("ℹ️ Слушатель уже запущен")
         except Exception as e:
             logger.exception(f"Ошибка запуска слушателя: {e}")
     
     def _on_stop_listener(self, icon=None, item=None):
         """Обработка остановки слушателя"""
         try:
-            if hasattr(self.app_window, 'notification_integration'):
-                self.app_window.notification_integration.stop_listener()
-                self.update_listener_status("Остановлен")
-                logger.info("✅ Слушатель остановлен из трея")
+            if hasattr(self.app_window, 'pipeline_manager'):
+                if self.app_window.pipeline_manager.is_running:
+                    self.app_window.pipeline_manager.stop()
+                    self.update_listener_status("Остановлен")
+                    logger.info("✅ Слушатель остановлен из трея")
+                else:
+                    logger.info("ℹ️ Слушатель уже остановлен")
         except Exception as e:
             logger.exception(f"Ошибка остановки слушателя: {e}")
-    
-    def _on_open_settings(self, icon=None, item=None):
-        """Обработка открытия настроек"""
-        try:
-            if hasattr(self.app_window, 'notebook'):
-                self.app_window.notebook.select(1)  # Вкладка настроек
-                self._on_show_window()
-                logger.info("✅ Настройки открыты из трея")
-        except Exception as e:
-            logger.exception(f"Ошибка открытия настроек: {e}")
-    
-    def _on_open_logs(self, icon=None, item=None):
-        """Обработка открытия логов"""
-        try:
-            if hasattr(self.app_window, 'notebook'):
-                self.app_window.notebook.select(2)  # Вкладка логов
-                self._on_show_window()
-                logger.info("✅ Логи открыты из трея")
-        except Exception as e:
-            logger.exception(f"Ошибка открытия логов: {e}")
     
     def _on_quit(self, icon=None, item=None):
         """Обработка выхода"""

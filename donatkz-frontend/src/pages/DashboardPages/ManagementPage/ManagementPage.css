@@ -1,0 +1,607 @@
+.management-page {
+  padding: 30px;
+  background-color: #1a1a1a;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Grid Layout - адаптируется под ширину контейнера */
+.management-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr) minmax(320px, 380px);
+  grid-template-rows: auto auto;
+  gap: 20px;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+/* Когда сайдбар свернут - больше места для контента */
+body.sidebar-collapsed .management-grid {
+  grid-template-columns: repeat(2, 1fr) minmax(360px, 420px);
+}
+
+/* График динамики */
+.dynamics-section {
+  grid-column: 1 / 3;
+  grid-row: 1;
+}
+
+/* Последние донаты */
+.donations-section {
+  grid-column: 3;
+  grid-row: 1 / 3;
+}
+
+/* Цель сбора */
+.goal-section {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+/* Статистика */
+.statistics-section {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+/* Общие стили секций */
+.management-section {
+  background-color: #1c1c1c;
+  border-radius: 16px;
+  padding: 25px;
+  border: 1px solid #252525;
+  min-width: 0;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.title-icon {
+  font-size: 24px;
+}
+
+/* Кнопки переключения периода */
+.time-period-toggle {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.period-btn {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 16px;
+  border-radius: 20px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+
+.period-btn:hover {
+  color: #88b702;
+  background-color: rgba(168, 215, 46, 0.1);
+}
+
+.period-btn.active {
+  background-color: #88b702;
+  color: #000;
+}
+
+/* График динамики */
+.chart-container {
+  margin-top: 10px;
+  width: 100%;
+  position: relative;
+}
+
+.chart-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(28, 28, 28, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #2a2a2a;
+  border-top-color: #88b702;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.custom-tooltip {
+  background-color: rgba(255, 255, 255, 0.95);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 4px;
+}
+
+.tooltip-date {
+  font-size: 12px;
+  color: #88b702;
+  font-weight: 600;
+}
+
+/* Последние донаты */
+.donations-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.donations-actions {
+  display: flex;
+  gap: 8px;
+  position: relative;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 6px;
+  transition: all 0.2s;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.icon-btn:hover {
+  color: #88b702;
+  background-color: rgba(168, 215, 46, 0.1);
+}
+
+.icon-svg {
+  width: 18px;
+  height: 18px;
+  filter: brightness(0) saturate(100%) invert(40%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(95%) contrast(88%);
+  transition: filter 0.2s;
+}
+
+.icon-btn:hover .icon-svg {
+  filter: brightness(0) saturate(100%) invert(72%) sepia(51%) saturate(1167%) hue-rotate(29deg) brightness(96%) contrast(87%);
+}
+
+/* Filter Dropdown */
+.filter-dropdown {
+  position: relative;
+}
+
+.filter-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-option {
+  background: none;
+  border: none;
+  color: #fff;
+  padding: 10px 14px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.filter-option:hover {
+  background-color: rgba(168, 215, 46, 0.1);
+  color: #88b702;
+}
+
+.filter-option.active {
+  background-color: #88b702;
+  color: #1a1a1a;
+}
+
+.donations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 600px;
+  padding-right: 5px;
+}
+
+.donation-item {
+  background-color: #252525;
+  border-radius: 10px;
+  padding: 16px;
+  transition: all 0.2s;
+  border-left: 3px solid #88b702;
+}
+
+.donation-item:hover {
+  background-color: #2a2a2a;
+  transform: translateX(2px);
+}
+
+.donation-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.donation-name {
+  font-weight: 600;
+  color: #88b702;
+  font-size: 15px;
+}
+
+.donation-amount {
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.donation-message {
+  font-size: 13px;
+  color: #888;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.donation-time {
+  font-size: 11px;
+  color: #666;
+}
+
+.donation-time-small {
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Цель сбора */
+.goal-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.goal-label {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 20px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.pie-container {
+  position: relative;
+  width: 100%;
+  margin-bottom: 25px;
+}
+
+.pie-percentage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  font-weight: 700;
+  color: #fff;
+  pointer-events: none;
+}
+
+.goal-stats {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #252525;
+}
+
+.stat-row:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #88b702;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.stat-value.green {
+  color: #fff;
+}
+
+/* Статистика */
+.statistics-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.statistics-section .time-period-toggle {
+  margin-bottom: 25px;
+}
+
+.stats-display {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-item .stat-label {
+  font-size: 12px;
+  color: #88b702;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.stat-item .stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.stat-item .stat-value.green {
+  color: #88b702;
+}
+
+/* Scrollbar */
+.donations-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.donations-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.donations-list::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 2px;
+}
+
+.donations-list::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+/* Адаптация под свернутый сайдбар (контейнер шире) */
+@media (min-width: 1800px) {
+  .management-grid {
+    grid-template-columns: repeat(2, 1fr) 400px;
+  }
+  
+  body.sidebar-collapsed .management-grid {
+    grid-template-columns: repeat(2, 1fr) 450px;
+  }
+}
+
+/* Адаптация под средние экраны */
+@media (max-width: 1600px) {
+  .management-grid {
+    grid-template-columns: repeat(2, 1fr) 340px;
+  }
+  
+  body.sidebar-collapsed .management-grid {
+    grid-template-columns: repeat(2, 1fr) 380px;
+  }
+}
+
+/* Когда места становится меньше - 3 колонки в 2 ряда */
+@media (max-width: 1400px) {
+  .management-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+  }
+  
+  body.sidebar-collapsed .management-grid {
+    grid-template-columns: repeat(2, 1fr) minmax(360px, 400px);
+    grid-template-rows: auto auto;
+  }
+  
+  .dynamics-section {
+    grid-column: 1 / 3;
+    grid-row: 1;
+  }
+  
+  .donations-section {
+    grid-column: 1 / 3;
+    grid-row: 2;
+    max-height: 400px;
+  }
+  
+  body.sidebar-collapsed .donations-section {
+    grid-column: 3;
+    grid-row: 1 / 3;
+    max-height: 600px;
+  }
+  
+  .goal-section {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  
+  body.sidebar-collapsed .goal-section {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  
+  .statistics-section {
+    grid-column: 2;
+    grid-row: 3;
+  }
+  
+  body.sidebar-collapsed .statistics-section {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+
+/* Планшеты */
+@media (max-width: 1200px) {
+  .management-page {
+    padding: 25px;
+  }
+  
+  .management-section {
+    padding: 20px;
+  }
+}
+
+/* Мобильные устройства */
+@media (max-width: 1024px) {
+  .management-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dynamics-section,
+  .donations-section,
+  .goal-section,
+  .statistics-section {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  
+  .donations-section {
+    max-height: 500px;
+  }
+}
+
+@media (max-width: 768px) {
+  .management-page {
+    padding: 20px;
+  }
+  
+  .management-section {
+    padding: 18px;
+  }
+  
+  .section-title {
+    font-size: 18px;
+  }
+  
+  .time-period-toggle {
+    gap: 6px;
+  }
+  
+  .period-btn {
+    font-size: 10px;
+    padding: 8px 12px;
+  }
+  
+  .pie-percentage {
+    font-size: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .management-page {
+    padding: 15px;
+  }
+  
+  .management-grid {
+    gap: 15px;
+  }
+  
+  .management-section {
+    padding: 15px;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .time-period-toggle {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .period-btn {
+    flex: 1;
+    padding: 8px 8px;
+    font-size: 9px;
+  }
+}

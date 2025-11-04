@@ -1,0 +1,59 @@
+/* ===== WIDGET CONTAINER ===== */
+.goal-widget-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  font-family: 'Montserrat', sans-serif;
+  overflow: hidden;
+}
+
+.goal-widget {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+/* ===== TEXT ELEMENTS ===== */
+.widget-goal-title {
+  text-align: center;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.widget-goal-amount {
+  text-align: center;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  margin: 8px 0;
+}
+
+/* ===== PROGRESS BAR ===== */
+.widget-goal-progress-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+.widget-goal-progress-fill {
+  height: 100%;
+  transition: width 0.5s ease;
+}
+
+/* ===== ERROR & LOADING STATES ===== */
+.goal-widget-error,
+.goal-widget-loading {
+  font-size: 18px;
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.goal-widget-error {
+  color: #ff4444;
+}

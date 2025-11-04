@@ -1,0 +1,59 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: DonatKZ Backend
+
+  # PostgreSQL
+  datasource:
+    url: jdbc:postgresql://localhost:5432/donatkz
+    username: postgres
+    password: 123456
+    driver-class-name: org.postgresql.Driver
+
+  # JPA/Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: wezoll963@gmail.com        # Твой Gmail
+    password: eghn yndu gfod nslj         # Код из 16 символов (убери пробелы или оставь)
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+# JWT настройки
+jwt:
+  secret: lSm57vLndE3vYh535fkSGhMyVerySecureSecretKeyForJWTTokenGenerationThatIsAtLeast64Chars
+  access-token-expiration: 3600000
+  refresh-token-expiration: 604800000
+
+# CORS
+cors:
+  allowed-origins: http://localhost:3000,http://localhost:5173
+
+app:
+  frontend-url: http://localhost:8080/api/auth
+  verification-token-expiration: 86400000
+
+logging:
+  level:
+    kz.donatkz: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG

@@ -27,23 +27,14 @@ class PipelineManager:
     - Статистикой
     """
     
-    def __init__(
-        self,
-        gui_app,
-        use_mock_listener: bool = True,
-        use_mock_api: bool = True
-    ):
+    def __init__(self, gui_app):
         """
         Инициализация менеджера
         
         Args:
             gui_app: Экземпляр GUI приложения
-            use_mock_listener: Использовать mock слушатель
-            use_mock_api: Использовать mock API
         """
         self.gui_app = gui_app
-        self.use_mock_listener = use_mock_listener
-        self.use_mock_api = use_mock_api
         
         # Компоненты
         self.notification_listener = None
@@ -63,7 +54,6 @@ class PipelineManager:
         }
         
         logger.info("PipelineManager инициализирован")
-        logger.info(f"Mock Listener: {use_mock_listener}, Mock API: {use_mock_api}")
     
     async def initialize(self, email: str = None, password: str = None):
         """
@@ -78,8 +68,7 @@ class PipelineManager:
             
             # 1. Создаём Donation Pipeline
             self.donation_pipeline = DonationPipeline(
-                gui_callback=self._on_donation_processed,
-                use_mock_api=self.use_mock_api
+                gui_callback=self._on_donation_processed
             )
             
             # 2. Инициализируем API
@@ -89,7 +78,6 @@ class PipelineManager:
             # 3. Создаём Notification Listener
             self.notification_listener = create_notification_listener(
                 callback=self._on_notification_received,
-                use_mock=self.use_mock_listener,
                 filter_sources=["kaspi", "kz.kaspi.mobile", "kaspi.kz"]
             )
             
@@ -144,6 +132,13 @@ class PipelineManager:
             self._add_log("INFO", "🚀 Полный pipeline запущен")
             self._add_log("INFO", f"📊 Компоненты: Listener ✅, Pipeline ✅, API ✅")
             
+            # Обновляем статус в трее если доступен
+            try:
+                if hasattr(self.gui_app, 'tray_manager') and self.gui_app.tray_manager:
+                    self.gui_app.tray_manager.update_listener_status("Запущен")
+            except Exception as e:
+                logger.debug(f"Не удалось обновить статус в трее: {e}")
+            
             logger.info("✅ Полный pipeline запущен")
             return True
             
@@ -177,6 +172,13 @@ class PipelineManager:
             # 3. Обновляем GUI
             self._update_gui_status("Остановлен", "red")
             self._add_log("INFO", "⏹️ Полный pipeline остановлен")
+            
+            # Обновляем статус в трее если доступен
+            try:
+                if hasattr(self.gui_app, 'tray_manager') and self.gui_app.tray_manager:
+                    self.gui_app.tray_manager.update_listener_status("Остановлен")
+            except Exception as e:
+                logger.debug(f"Не удалось обновить статус в трее: {e}")
             
             logger.info("✅ Полный pipeline остановлен")
             

@@ -31,6 +31,7 @@ class DashboardTab:
         
         # Данные
         self.donations = []  # Список донатов за сегодня
+        self.gui_app = None  # Будет установлено из main_window
         
         # Создаём UI
         self._create_statistics_section()
@@ -38,6 +39,14 @@ class DashboardTab:
         self._create_actions_section()
         
         logger.debug("Dashboard вкладка инициализирована")
+        
+        # Загружаем начальную статистику с API через небольшую задержку
+        # (чтобы дать время главному окну установить gui_app)
+        self.frame.after(3000, self._load_stats_from_api)
+    
+    def set_gui_app(self, gui_app):
+        """Установить ссылку на главное приложение"""
+        self.gui_app = gui_app
     
     def _create_statistics_section(self):
         """Создание секции статистики"""
@@ -181,8 +190,13 @@ class DashboardTab:
                 "message": message
             })
             
-            # Обновляем статистику
+            # Обновляем статистику из локальных данных
             self._update_statistics()
+            
+            # Также обновляем статистику с API для синхронизации
+            # (запускаем через небольшую задержку чтобы Backend успел обновить статистику)
+            if hasattr(self, 'frame'):
+                self.frame.after(2000, self._load_stats_from_api)
             
             logger.info(f"Донат добавлен в Dashboard: {amount}₸ от {sender}")
             
@@ -190,14 +204,13 @@ class DashboardTab:
             logger.error(f"Ошибка при добавлении доната: {e}")
     
     def _update_statistics(self):
-        """Обновить карточки статистики"""
+        """Обновить карточки статистики из локальных данных"""
         if not self.donations:
-            self.donations_count_card.update_value("0")
-            self.total_amount_card.update_value("0₸")
-            self.average_amount_card.update_value("0₸")
+            # Пробуем загрузить статистику с API
+            self._load_stats_from_api()
             return
         
-        # Подсчёт статистики
+        # Подсчёт статистики из локальных данных
         count = len(self.donations)
         total = sum(d["amount"] for d in self.donations)
         average = total / count if count > 0 else 0
@@ -206,6 +219,177 @@ class DashboardTab:
         self.donations_count_card.update_value(str(count))
         self.total_amount_card.update_value(f"{total:,.0f}₸")
         self.average_amount_card.update_value(f"{average:,.0f}₸")
+    
+    def _load_stats_from_api(self):
+        """Загрузить статистику с Backend API"""
+        if not self.gui_app:
+            return
+        
+        import threading
+        import asyncio
+        from database.db_manager import DatabaseManager
+        from config import Config
+        from api import create_api_client
+        
+        def load_stats():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                # Получаем device_token из БД
+                db_manager = DatabaseManager(Config.DONATIONS_DB_FILE)
+                device_token = db_manager.get_setting("device_token")
+                
+                if not device_token:
+                    logger.debug("Device token не найден, статистика с API не загружена")
+                    return
+                
+                # Создаём API клиент
+                api_client = create_api_client(use_mock=False)
+                
+                # Получаем статистику
+                async def fetch_stats():
+                    await api_client._ensure_session()
+                    return await api_client.get_donations_stats(device_token)
+                
+                result = loop.run_until_complete(fetch_stats())
+                
+                # Логируем полный ответ API для отладки
+                logger.debug(f"📊 Полный ответ API: {result}")
+                
+                if "error" not in result:
+                    # Пробуем разные варианты ключей, которые может возвращать API
+                    # Вариант 1: Прямые ключи верхнего уровня
+                    count_today = None
+                    amount_today = None
+                    
+                    # Пробуем извлечь count_today
+                    if "countToday" in result:
+                        count_today = result["countToday"]
+                    elif "count_today" in result:
+                        count_today = result["count_today"]
+                    elif "count" in result:
+                        count_today = result["count"]
+                    
+                    # Пробуем извлечь amount_today
+                    if "amountToday" in result:
+                        amount_today = result["amountToday"]
+                    elif "amount_today" in result:
+                        amount_today = result["amount_today"]
+                    elif "amount" in result:
+                        amount_today = result["amount"]
+                    elif "total" in result:
+                        amount_today = result["total"]
+                    
+                    # Если данные вложены в другие ключи (например, в "stats")
+                    if (count_today is None or amount_today is None) and "stats" in result:
+                        stats = result["stats"]
+                        if count_today is None:
+                            if "countToday" in stats:
+                                count_today = stats["countToday"]
+                            elif "count_today" in stats:
+                                count_today = stats["count_today"]
+                            elif "count" in stats:
+                                count_today = stats["count"]
+                        
+                        if amount_today is None:
+                            if "amountToday" in stats:
+                                amount_today = stats["amountToday"]
+                            elif "amount_today" in stats:
+                                amount_today = stats["amount_today"]
+                            elif "amount" in stats:
+                                amount_today = stats["amount"]
+                            elif "total" in stats:
+                                amount_today = stats["total"]
+                    
+                    # Преобразуем в правильные типы
+                    try:
+                        count_today = int(count_today) if count_today is not None else 0
+                        amount_today = float(amount_today) if amount_today is not None else 0.0
+                    except (ValueError, TypeError) as e:
+                        logger.warning(f"⚠️ Ошибка преобразования типов: {e}, count_today={result.get('countToday')}, amount_today={result.get('amountToday')}")
+                        count_today = 0
+                        amount_today = 0.0
+                    
+                    # Рассчитываем среднюю из данных за сегодня или используем общую
+                    if count_today > 0:
+                        average_today = amount_today / count_today
+                    else:
+                        # Пробуем извлечь среднюю из API
+                        average_today = None
+                        if "averageAmount" in result:
+                            average_today = result["averageAmount"]
+                        elif "average_amount" in result:
+                            average_today = result["average_amount"]
+                        elif "average" in result:
+                            average_today = result["average"]
+                        
+                        # Если средняя вложена в "stats"
+                        if average_today is None and "stats" in result:
+                            stats = result["stats"]
+                            if "averageAmount" in stats:
+                                average_today = stats["averageAmount"]
+                            elif "average_amount" in stats:
+                                average_today = stats["average_amount"]
+                            elif "average" in stats:
+                                average_today = stats["average"]
+                        
+                        try:
+                            average_today = float(average_today) if average_today is not None else 0.0
+                        except (ValueError, TypeError):
+                            average_today = 0.0
+                    
+                    logger.info(f"📊 Извлеченные данные: count={count_today}, amount={amount_today}, average={average_today}")
+                    
+                    # Сохраняем значения для безопасного обновления в главном потоке
+                    # Используем частичное применение вместо lambda для избежания проблем с замыканием
+                    c = int(count_today)
+                    a = float(amount_today)
+                    avg = float(average_today)
+                    
+                    # Обновляем в главном потоке через метод с правильными параметрами
+                    def update_ui():
+                        self._update_stats_from_api_result(c, a, avg)
+                    
+                    self.frame.after(0, update_ui)
+                    
+                    logger.info(f"✅ Статистика загружена с API: {count_today} донатов, {amount_today}₸")
+                else:
+                    logger.warning(f"⚠️ Ошибка загрузки статистики: {result.get('error')}")
+                
+                # Закрываем сессию
+                loop.run_until_complete(api_client.close())
+                
+            except Exception as e:
+                logger.exception(f"❌ Ошибка загрузки статистики с API: {e}")
+            finally:
+                loop.close()
+        
+        thread = threading.Thread(target=load_stats, daemon=True)
+        thread.start()
+    
+    def _update_stats_from_api_result(self, count: int, total: float, average: float):
+        """Обновить статистику из результата API"""
+        logger.info(f"🔄 Обновление статистики в UI: count={count}, total={total}, average={average}")
+        
+        # Обновляем все три карточки
+        try:
+            self.donations_count_card.update_value(str(count))
+            logger.debug(f"✅ Карточка 'Донатов' обновлена: {count}")
+        except Exception as e:
+            logger.error(f"❌ Ошибка обновления карточки 'Донатов': {e}")
+        
+        try:
+            self.total_amount_card.update_value(f"{total:,.0f}₸")
+            logger.debug(f"✅ Карточка 'Сумма' обновлена: {total:,.0f}₸")
+        except Exception as e:
+            logger.error(f"❌ Ошибка обновления карточки 'Сумма': {e}")
+        
+        try:
+            self.average_amount_card.update_value(f"{average:,.0f}₸")
+            logger.debug(f"✅ Карточка 'Средняя' обновлена: {average:,.0f}₸")
+        except Exception as e:
+            logger.error(f"❌ Ошибка обновления карточки 'Средняя': {e}")
+    
     
     def _open_web_panel(self):
         """Открыть веб-панель в браузере"""
