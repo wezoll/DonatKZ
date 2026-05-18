@@ -9,6 +9,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from .dashboard_tab import DashboardTab
+from .settings_tab import SettingsTab
+from .logs_tab import LogsTab
 from .notification_integration import NotificationIntegration
 from core.pipeline_manager import PipelineManager
 from tray import TrayManager, PhoneLinkMonitor
@@ -255,9 +257,15 @@ class DonatKZApp:
         self.dashboard_tab = DashboardTab(self.notebook)
         # Устанавливаем ссылку на главное приложение
         self.dashboard_tab.set_gui_app(self)
-        
-        # Добавляем вкладку в Notebook
         self.notebook.add(self.dashboard_tab.frame, text="📊 Dashboard")
+        
+        # Вкладка Настройки (pipeline_manager передаём после инициализации)
+        self.settings_tab = SettingsTab(self.notebook, pipeline=None)
+        self.notebook.add(self.settings_tab.frame, text="⚙️ Настройки")
+        
+        # Вкладка Логи
+        self.logs_tab = LogsTab(self.notebook)
+        self.notebook.add(self.logs_tab.frame, text="📝 Логи")
         
         # Загружаем статистику с API после инициализации
         self.root.after(2000, self._load_initial_stats)
@@ -785,6 +793,16 @@ class DonatKZApp:
                     
                     logger.info("✅ Все компоненты созданы")
                     self.add_log_message("INFO", "✅ Все компоненты созданы")
+                    
+                    # Передаём donation_pipeline в settings_tab для reload после сохранения
+                    try:
+                        if hasattr(self, 'settings_tab'):
+                            self.root.after(0, lambda: setattr(
+                                self.settings_tab, '_pipeline',
+                                self.pipeline_manager.donation_pipeline
+                            ))
+                    except Exception:
+                        pass
                 else:
                     logger.info("ℹ️ Pipeline уже инициализирован")
                     self.add_log_message("INFO", "ℹ️ Pipeline уже инициализирован")

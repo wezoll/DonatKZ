@@ -42,4 +42,20 @@ export const authApi = {
         const response = await axiosInstance.get(`/api/auth/verify-email?token=${token}`);
         return response.data;
     },
+
+    /**
+     * Запрос на сброс пароля (отправка письма)
+     */
+    forgotPassword: async (email: string): Promise<{ message: string }> => {
+        const response = await axiosInstance.post('/api/auth/forgot-password', { email });
+        return response.data;
+    },
+
+    /**
+     * Установка нового пароля по токену из письма
+     */
+    resetPassword: async (token: string, newPassword: string, confirmPassword: string): Promise<{ message: string }> => {
+        const response = await axiosInstance.post('/api/auth/reset-password', { token, newPassword, confirmPassword });
+        return response.data;
+    },
 };

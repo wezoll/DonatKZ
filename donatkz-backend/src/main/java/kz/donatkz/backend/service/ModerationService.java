@@ -107,9 +107,7 @@ public class ModerationService {
         return false;
     }
 
-    /**
-     * Парсить JSON массив запрещенных слов
-     */
+
     private List<String> parseBannedWords(String bannedWordsJson) {
         try {
             if (bannedWordsJson == null || bannedWordsJson.trim().isEmpty()) {

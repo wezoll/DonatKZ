@@ -1,0 +1,584 @@
+/* ===== PAGE ===== */
+.hotkeys-page {
+    padding: 30px;
+    background-color: #1a1a1a;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* ===== HEADER ===== */
+.hotkeys-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.hotkeys-page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.add-hotkey-btn {
+    background-color: #88b702;
+    color: #fff;
+    border: none;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.add-hotkey-btn:hover {
+    background-color: #a8d72e;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(136, 183, 2, 0.3);
+}
+
+/* ===== DESCRIPTION ===== */
+.hotkeys-description {
+    font-size: 14px;
+    color: #888;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    padding: 16px 20px;
+    background: #1c1c1c;
+    border: 1px solid #252525;
+    border-radius: 12px;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-hotkeys-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    background-color: #1c1c1c;
+    border: 2px dashed #2a2a2a;
+    border-radius: 16px;
+}
+
+.empty-hotkeys-state svg {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.empty-hotkeys-state p {
+    font-size: 16px;
+    color: #888;
+    margin: 0 0 20px 0;
+}
+
+.add-hotkey-btn-empty {
+    background-color: #88b702;
+    color: #fff;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-hotkey-btn-empty:hover {
+    background-color: #a8d72e;
+    transform: translateY(-2px);
+}
+
+/* ===== CONTAINER ===== */
+.hotkeys-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ===== CARD ===== */
+.hotkey-card {
+    background-color: #1c1c1c;
+    border: 1px solid #252525;
+    border-radius: 16px;
+    padding: 30px;
+    transition: all 0.3s ease;
+}
+
+.hotkey-card:hover {
+    border-color: #88b702;
+    box-shadow: 0 8px 24px rgba(136, 183, 2, 0.1);
+}
+
+.hotkey-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 20px;
+}
+
+.hotkey-card-info {
+    flex: 1;
+}
+
+.hotkey-keys-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #252525;
+    border: 1px solid #333;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 10px;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.hotkey-card-amount {
+    font-size: 14px;
+    color: #888;
+    margin: 0;
+}
+
+.hotkey-card-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Reuse GoalPage button styles */
+.goal-action-btn {
+    background-color: transparent;
+    border: 1px solid #2a2a2a;
+    color: #88b702;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.goal-action-btn:hover {
+    background-color: rgba(136, 183, 2, 0.1);
+    border-color: #88b702;
+}
+
+.goal-delete-btn {
+    background-color: transparent;
+    border: 1px solid #2a2a2a;
+    color: #ff4444;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.goal-delete-btn:hover {
+    background-color: rgba(255, 68, 68, 0.1);
+    border-color: #ff4444;
+}
+
+/* Toggle switch (NotificationsPage style) */
+.notification-toggle {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.notification-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.notification-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #2a2a2a;
+    transition: 0.3s;
+    border-radius: 28px;
+}
+
+.notification-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.notification-toggle input:checked+.notification-toggle-slider {
+    background-color: #88b702;
+}
+
+.notification-toggle input:checked+.notification-toggle-slider:before {
+    transform: translateX(22px);
+}
+
+/* Card body */
+.hotkey-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid #252525;
+}
+
+.hotkey-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+.hotkey-info-label {
+    color: #888;
+    font-weight: 600;
+}
+
+.hotkey-info-value {
+    color: #fff;
+    font-weight: 600;
+}
+
+.hotkey-status {
+    font-weight: 700;
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 8px;
+}
+
+.hotkey-status.active {
+    background: rgba(136, 183, 2, 0.15);
+    color: #88b702;
+}
+
+.hotkey-status.inactive {
+    background: rgba(255, 68, 68, 0.1);
+    color: #ff4444;
+}
+
+/* ===== MODAL (matches GoalPage) ===== */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-content {
+    background-color: #1c1c1c;
+    border: 1px solid #252525;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 30px;
+    border-bottom: 1px solid #252525;
+}
+
+.modal-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.modal-close-btn:hover {
+    color: #fff;
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #888;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.form-label-row .form-label {
+    margin-bottom: 0;
+}
+
+.btn-mode-toggle {
+    background: transparent;
+    border: 1px solid #333;
+    color: #88b702;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-mode-toggle:hover {
+    background: rgba(136, 183, 2, 0.1);
+    border-color: #88b702;
+}
+
+.manual-key-input {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-input {
+    width: 100%;
+    background-color: #252525;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 15px;
+    color: #fff;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #88b702;
+    background-color: #2a2a2a;
+}
+
+.form-input::placeholder {
+    color: #666;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+}
+
+/* Modal footer */
+.modal-footer {
+    display: flex;
+    gap: 12px;
+    padding: 20px 30px;
+    border-top: 1px solid #252525;
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modal-btn-cancel {
+    background-color: transparent;
+    border: 1px solid #2a2a2a;
+    color: #888;
+}
+
+.modal-btn-cancel:hover {
+    background-color: #252525;
+    color: #fff;
+}
+
+.modal-btn-save {
+    background-color: #88b702;
+    color: #1a1a1a;
+}
+
+.modal-btn-save:hover {
+    background-color: #a8d72e;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(136, 183, 2, 0.3);
+}
+
+.modal-btn-delete {
+    background-color: #ff4444;
+    color: #fff;
+}
+
+.modal-btn-delete:hover {
+    background-color: #ff6666;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 68, 68, 0.3);
+}
+
+/* ===== KEY RECORDER ===== */
+.key-recorder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 28px 20px;
+    background-color: #252525;
+    border: 2px dashed #333;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+    min-height: 80px;
+}
+
+.key-recorder:hover {
+    border-color: #555;
+    background-color: #2a2a2a;
+}
+
+.key-recorder.recording {
+    border-color: #88b702;
+    background-color: rgba(136, 183, 2, 0.05);
+    box-shadow: 0 0 0 4px rgba(136, 183, 2, 0.1);
+}
+
+.key-recorder-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+
+.key-recorder-keys {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #aaa;
+}
+
+.btn-clear-keys {
+    background: transparent;
+    border: 1px solid #333;
+    color: #888;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-clear-keys:hover {
+    background: rgba(255, 68, 68, 0.1);
+    color: #ff4444;
+    border-color: #ff4444;
+}
+
+.key-cap {
+    display: inline-block;
+    background: #333;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    border-bottom: 3px solid #444;
+    min-width: 32px;
+    text-align: center;
+}
+
+.key-recorder-pulse {
+    font-size: 15px;
+    font-weight: 600;
+    color: #88b702;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}

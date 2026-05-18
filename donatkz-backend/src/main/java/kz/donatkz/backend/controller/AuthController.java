@@ -77,7 +77,36 @@ public class AuthController {
         return ResponseEntity.ok(userDto);
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            if (email == null || email.isBlank()) {
+                return ResponseEntity.badRequest().body(new ErrorResponse("Введите email"));
+            }
+            String message = authService.requestPasswordReset(email);
+            return ResponseEntity.ok(new MessageResponse(message));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
 
-record MessageResponse(String message) {}
-    record ErrorResponse(String message) {}
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        try {
+            String token = request.get("token");
+            String newPassword = request.get("newPassword");
+            String confirmPassword = request.get("confirmPassword");
+            String message = authService.resetPassword(token, newPassword, confirmPassword);
+            return ResponseEntity.ok(new MessageResponse(message));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    record MessageResponse(String message) {
+    }
+
+    record ErrorResponse(String message) {
+    }
 }

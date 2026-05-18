@@ -22,7 +22,7 @@ const AdminPage: React.FC = () => {
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [editingTariff, setEditingTariff] = useState<{ userId: string; tariff: string; start: string; end: string } | null>(null);
-  
+
   // Состояния для модальных окон новостей
   const [showNewsModal, setShowNewsModal] = useState(false);
   const [editingNews, setEditingNews] = useState<NewsItem | null>(null);
@@ -33,7 +33,7 @@ const AdminPage: React.FC = () => {
     fullDescription: '',
     icon: 'megaphone',
   });
-  
+
   // Состояния для модальных окон FAQ
   const [showFaqModal, setShowFaqModal] = useState(false);
   const [editingFaq, setEditingFaq] = useState<FaqItem | null>(null);
@@ -41,7 +41,7 @@ const AdminPage: React.FC = () => {
     question: '',
     answer: '',
   });
-  
+
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [tariffRequests, setTariffRequests] = useState<TariffRequestResponse[]>([]);
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
@@ -138,17 +138,17 @@ const AdminPage: React.FC = () => {
     const start = new Date(startDate);
     const end = new Date(endDate);
     const now = new Date();
-    
+
     // Если тариф еще не начался
     if (now < start) {
       return { days: 0, status: 'Не начат' };
     }
-    
+
     // Если тариф закончился
     if (now > end) {
       return { days: 0, status: 'Истек' };
     }
-    
+
     // Вычисляем оставшиеся дни
     const diff = end.getTime() - now.getTime();
     const days = Math.ceil(diff / (1000 * 3600 * 24));
@@ -160,7 +160,7 @@ const AdminPage: React.FC = () => {
     const end = new Date(endDate);
     const diffTime = end.getTime() - start.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 3600 * 24));
-    
+
     if (diffDays >= 365) {
       const years = Math.floor(diffDays / 365);
       return `${years} ${years === 1 ? 'год' : years < 5 ? 'года' : 'лет'}`;
@@ -174,8 +174,8 @@ const AdminPage: React.FC = () => {
 
   const handleToggleAdmin = async (userId: string, currentRole: UserRole) => {
     const newRole = currentRole === 'admin' ? 'USER' : 'ADMIN';
-    const confirmText = currentRole === 'admin' 
-      ? 'Вы уверены, что хотите отобрать права администратора?' 
+    const confirmText = currentRole === 'admin'
+      ? 'Вы уверены, что хотите отобрать права администратора?'
       : 'Вы уверены, что хотите назначить этого пользователя администратором?';
 
     if (window.confirm(confirmText)) {
@@ -258,8 +258,8 @@ const AdminPage: React.FC = () => {
         tariffStart: formattedStart,
         tariffEnd: formattedEnd,
       });
-      setUsers(users.map(u => 
-        u.id === userId 
+      setUsers(users.map(u =>
+        u.id === userId
           ? { ...u, tariff: tariff as 'FREE' | 'BASIC' | 'PREMIUM', tariffStart: formattedStart, tariffEnd: formattedEnd }
           : u
       ));
@@ -297,7 +297,7 @@ const AdminPage: React.FC = () => {
       });
 
       // Обновляем локальное состояние
-      setTariffRequests(tariffRequests.map(r => 
+      setTariffRequests(tariffRequests.map(r =>
         r.id === requestId ? updatedRequest : r
       ));
 
@@ -324,7 +324,7 @@ const AdminPage: React.FC = () => {
       });
 
       // Обновляем локальное состояние
-      setTariffRequests(tariffRequests.map(r => 
+      setTariffRequests(tariffRequests.map(r =>
         r.id === requestId ? updatedRequest : r
       ));
     } catch (error: any) {
@@ -474,25 +474,6 @@ const AdminPage: React.FC = () => {
 
   return (
     <div className="admin-page">
-      {/* Header */}
-      <div className="admin-header">
-        <div className="admin-header-content">
-          <div className="admin-header-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5" />
-              <path d="M2 12l10 5 10-5" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="admin-header-title">Админ-панель</h1>
-            <p className="admin-header-subtitle">
-              Роль: {currentUserRole === 'superadmin' ? 'Главный администратор' : 'Администратор'}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Tabs */}
       <div className="admin-tabs">
         {tabs.map((tab) => (
@@ -562,7 +543,7 @@ const AdminPage: React.FC = () => {
                           Срок: {calculateTariffDuration(user.tariffStart, user.tariffEnd)}
                         </span>
                         <span className={`tariff-remaining ${calculateRemainingDays(user.tariffStart, user.tariffEnd).status === 'Истек' ? 'expired' : ''}`}>
-                          {calculateRemainingDays(user.tariffStart, user.tariffEnd).status === 'Активен' 
+                          {calculateRemainingDays(user.tariffStart, user.tariffEnd).status === 'Активен'
                             ? `Осталось: ${calculateRemainingDays(user.tariffStart, user.tariffEnd).days} дней`
                             : calculateRemainingDays(user.tariffStart, user.tariffEnd).status
                           }
@@ -623,8 +604,8 @@ const AdminPage: React.FC = () => {
                       <div className="edit-form">
                         <div className="form-group">
                           <label className="form-label">Тариф</label>
-                          <select 
-                            className="form-select" 
+                          <select
+                            className="form-select"
                             value={editingTariff?.userId === user.id ? editingTariff.tariff : user.tariff}
                             onChange={(e) => {
                               const current = editingTariff?.userId === user.id ? editingTariff : { userId: user.id, tariff: user.tariff, start: user.tariffStart || '', end: user.tariffEnd || '' };
@@ -676,8 +657,8 @@ const AdminPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="edit-panel-actions">
-                        <button 
-                          className="save-btn" 
+                        <button
+                          className="save-btn"
                           onClick={() => {
                             const current = editingTariff?.userId === user.id ? editingTariff : { userId: user.id, tariff: user.tariff, start: user.tariffStart || '', end: user.tariffEnd || '' };
                             handleUpdateUserTariff(user.id, current.tariff, current.start, current.end);
@@ -685,8 +666,8 @@ const AdminPage: React.FC = () => {
                         >
                           Сохранить изменения
                         </button>
-                        <button 
-                          className="cancel-btn" 
+                        <button
+                          className="cancel-btn"
                           onClick={() => {
                             setExpandedUserId(null);
                             setEditingTariff(null);
@@ -720,8 +701,8 @@ const AdminPage: React.FC = () => {
                       <p className="request-email">{request.email}</p>
                     </div>
                     <span className={`status-badge status-${request.status}`}>
-                      {request.status === 'pending' ? 'На рассмотрении' : 
-                       request.status === 'approved' ? 'Одобрено' : 'Отклонено'}
+                      {request.status === 'pending' ? 'На рассмотрении' :
+                        request.status === 'approved' ? 'Одобрено' : 'Отклонено'}
                     </span>
                   </div>
 
@@ -742,12 +723,12 @@ const AdminPage: React.FC = () => {
                     </div>
                     <div className="detail-item">
                       <span className="detail-label">Дата:</span>
-                      <span className="detail-value">{new Date(request.createdAt).toLocaleString('ru-RU', { 
-                        year: 'numeric', 
-                        month: '2-digit', 
-                        day: '2-digit', 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
+                      <span className="detail-value">{new Date(request.createdAt).toLocaleString('ru-RU', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
                       })}</span>
                     </div>
                   </div>
@@ -828,9 +809,9 @@ const AdminPage: React.FC = () => {
                 <div key={news.id} className="news-management-card">
                   <div className="news-card-header">
                     <span className={`news-type-badge type-${news.type}`}>
-                      {news.type === 'update' ? 'Обновление' : 
-                       news.type === 'feature' ? 'Новая функция' : 
-                       'Объявление'}
+                      {news.type === 'update' ? 'Обновление' :
+                        news.type === 'feature' ? 'Новая функция' :
+                          'Объявление'}
                     </span>
                     {news.badge && <span className="news-badge">{news.badge}</span>}
                   </div>

@@ -13,6 +13,9 @@ import StatisticsPage from '../DashboardPages/StatisticsPage/StatisticsPage';
 import SettingsPage from '../DashboardPages/SettingsPage/SettingsPage';
 import NotificationPage from '../DashboardPages/NotificationsPage/NotificationsPage';
 import AdminPanel from '../DashboardPages/AdminPanel/AdminPanel';
+import HotkeysPage from '../DashboardPages/HotkeysPage/HotkeysPage';
+import RoulettePage from '../DashboardPages/RoulettePage/RoulettePage';
+import VideoPage from '../DashboardPages/VideoPage/VideoPage';
 import { userApi } from '../../api/user.api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -60,11 +63,11 @@ const DashboardPage: React.FC = () => {
             case 'statistics':
                 return <StatisticsPage />;
             case 'video':
-                return <div className="page-placeholder">Видео</div>;
+                return <VideoPage />;
             case 'hotkeys':
-                return <div className="page-placeholder">Горячие клавиши</div>;
+                return <HotkeysPage />;
             case 'roulette':
-                return <div className="page-placeholder">Рулетка</div>;
+                return <RoulettePage />;
             case 'settings':
                 return <SettingsPage />;
             case 'support':

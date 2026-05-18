@@ -52,7 +52,7 @@
 .admin-tabs {
   display: flex;
   gap: 8px;
-  padding: 20px 40px;
+  padding: 20px;
   background-color: #1a1a1a;
   border-bottom: 1px solid #252525;
   overflow-x: auto;
@@ -99,7 +99,7 @@
 
 /* ===== CONTENT ===== */
 .admin-content {
-  padding: 30px 40px;
+  padding: 30px 20px;
   max-width: 1400px;
   margin: 0 auto;
 }

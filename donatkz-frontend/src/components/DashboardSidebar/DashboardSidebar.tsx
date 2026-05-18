@@ -12,7 +12,7 @@ interface DashboardSidebarProps {
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activePage, onPageChange }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isWidgetsOpen, setIsWidgetsOpen] = useState(true);
   const [isCabinetOpen, setIsCabinetOpen] = useState(true);
@@ -63,8 +63,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activePage, onPageC
         <img src={donatKzLogo} alt="DonatKZ" className="logo-image" />
         {!isCollapsed && <span className="logo-text">DonatKZ</span>}
         {!isCollapsed && (
-          <button 
-            className="menu-toggle" 
+          <button
+            className="menu-toggle"
             onClick={toggleSidebar}
             aria-label="Свернуть меню"
           >
@@ -74,7 +74,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activePage, onPageC
       </div>
 
       {!isCollapsed && (
-        <button 
+        <button
           className="sidebar-section-title"
           onClick={() => setIsPanelOpen(!isPanelOpen)}
         >
@@ -92,8 +92,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activePage, onPageC
                 className={`nav-item ${activePage === item.id ? 'active' : ''}`}
                 title={isCollapsed ? item.label : ''}
               >
-                <img 
-                  src={activePage === item.id ? item.iconActive : item.icon} 
+                <img
+                  src={activePage === item.id ? item.iconActive : item.icon}
                   alt={item.label}
                   className="nav-icon-img"
                 />
@@ -105,7 +105,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activePage, onPageC
       )}
 
       {!isCollapsed && (
-        <button 
+        <button
           className="sidebar-section-title"
           onClick={() => setIsWidgetsOpen(!isWidgetsOpen)}
         >
@@ -123,8 +123,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activePage, onPageC
                 className={`nav-item ${activePage === item.id ? 'active' : ''}`}
                 title={isCollapsed ? item.label : ''}
               >
-                <img 
-                  src={activePage === item.id ? item.iconActive : item.icon} 
+                <img
+                  src={activePage === item.id ? item.iconActive : item.icon}
                   alt={item.label}
                   className="nav-icon-img"
                 />
@@ -136,7 +136,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activePage, onPageC
       )}
 
       {!isCollapsed && (
-        <button 
+        <button
           className="sidebar-section-title"
           onClick={() => setIsCabinetOpen(!isCabinetOpen)}
         >
@@ -154,8 +154,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activePage, onPageC
                 className={`nav-item ${activePage === item.id ? 'active' : ''}`}
                 title={isCollapsed ? item.label : ''}
               >
-                <img 
-                  src={activePage === item.id ? item.iconActive : item.icon} 
+                <img
+                  src={activePage === item.id ? item.iconActive : item.icon}
                   alt={item.label}
                   className="nav-icon-img"
                 />
@@ -170,8 +170,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activePage, onPageC
       {isAdmin && (
         <>
           {!isCollapsed && (
-            <button 
-              className="sidebar-section-title admin-section"
+            <button
+              className="sidebar-section-title"
               onClick={() => setIsAdminOpen(!isAdminOpen)}
             >
               Администрирование {isAdminOpen ? '▼' : '▶'}
@@ -188,8 +188,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activePage, onPageC
                     className={`nav-item admin-item ${activePage === item.id ? 'active' : ''}`}
                     title={isCollapsed ? item.label : ''}
                   >
-                    <img 
-                      src={activePage === item.id ? item.iconActive : item.icon} 
+                    <img
+                      src={activePage === item.id ? item.iconActive : item.icon}
                       alt={item.label}
                       className="nav-icon-img"
                     />
@@ -202,13 +202,13 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activePage, onPageC
         </>
       )}
 
-      <button 
-        onClick={handleLogout} 
+      <button
+        onClick={handleLogout}
         className="nav-item logout"
         title={isCollapsed ? 'Выйти' : ''}
       >
-        <img 
-          src="/icons/logout-icon.svg" 
+        <img
+          src="/icons/logout-icon.svg"
           alt="Выйти"
           className="nav-icon-img"
         />

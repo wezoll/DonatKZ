@@ -19,6 +19,7 @@ import DashboardPage from './pages/DashboardPage/DashboardPage';
 import WidgetPage from './pages/WidgetPage/WidgetPage';
 import GoalWidgetPage from './pages/GoalWidgetPage/GoalWidgetPage';
 import StatisticsWidgetPage from './pages/StatisticsWidgetPage/StatisticsWidgetPage';
+import ResetPasswordPage from './pages/ResetPasswordPage/ResetPasswordPage';
 import './App.css';
 
 // Protected Route Component
@@ -115,6 +116,11 @@ function AppContent() {
                 <Route
                     path="/statistics-widget/:apiKey/:id"
                     element={<StatisticsWidgetPage />}
+                />
+
+                <Route
+                    path="/reset-password"
+                    element={<ResetPasswordPage />}
                 />
 
                 {/* Protected Route - только для авторизованных */}

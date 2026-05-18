@@ -50,22 +50,36 @@ const TariffPage: React.FC<TariffPageProps> = ({ onNavigateToPayment }) => {
     if (user) {
       const tier = user.subscriptionTier || 'FREE';
       const expiresAt = user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt) : null;
-      
-      // Вычислить даты и дни
       const now = new Date();
-      const startDate = user.createdAt ? new Date(user.createdAt) : now;
-      const endDate = expiresAt || new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000); // По умолчанию 3 дня
-      
-      const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-      const daysUsed = Math.ceil((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      let startDate: Date;
+      let endDate: Date;
+
+      if (tier === 'FREE') {
+        // Для FREE: начало = дата регистрации, окончание = +3 дня от регистрации
+        startDate = user.createdAt ? new Date(user.createdAt) : now;
+        endDate = expiresAt || new Date(startDate.getTime() + 3 * 24 * 60 * 60 * 1000);
+      } else {
+        // Для BASIC/PREMIUM: используем реальную дату начала от бэкенда
+        endDate = expiresAt || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        if (user.subscriptionStartAt) {
+          startDate = new Date(user.subscriptionStartAt);
+        } else {
+          // Фолбэк: -30 дней от окончания (для старых аккаунтов)
+          startDate = new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+        }
+      }
+
+      const totalDays = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+      const daysUsed = Math.max(0, Math.ceil((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
 
       setUserTariff({
         planId: tier.toLowerCase(),
         startDate: startDate.toLocaleDateString('ru-RU'),
         endDate: endDate.toLocaleDateString('ru-RU'),
         billingPeriod: 'monthly',
-        daysUsed: Math.max(1, daysUsed),
-        totalDays: Math.max(1, totalDays),
+        daysUsed: Math.min(daysUsed, totalDays),
+        totalDays,
       });
     }
   }, [user]);
@@ -93,7 +107,6 @@ const TariffPage: React.FC<TariffPageProps> = ({ onNavigateToPayment }) => {
         'Хоткей',
         'Личная страница'
       ],
-      isActive: true,
     },
     {
       id: 'basic',
@@ -147,12 +160,12 @@ const TariffPage: React.FC<TariffPageProps> = ({ onNavigateToPayment }) => {
   const getPriceDisplay = () => {
     if (!currentPlan) return '';
     if (currentPlan.monthlyPrice === 0) return '0 ₸ / 3 дня';
-    
-    const price = userTariff.billingPeriod === 'monthly' 
-      ? currentPlan.monthlyPrice 
+
+    const price = userTariff.billingPeriod === 'monthly'
+      ? currentPlan.monthlyPrice
       : currentPlan.yearlyPrice;
     const period = userTariff.billingPeriod === 'monthly' ? '/ мес' : '/ год';
-    
+
     return `${formatPrice(price)} ₸ ${period}`;
   };
 
@@ -200,8 +213,8 @@ const TariffPage: React.FC<TariffPageProps> = ({ onNavigateToPayment }) => {
           </div>
 
           <div className="tariff-progress-bar">
-            <div 
-              className="tariff-progress-fill" 
+            <div
+              className="tariff-progress-fill"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -221,49 +234,47 @@ const TariffPage: React.FC<TariffPageProps> = ({ onNavigateToPayment }) => {
       <div className="all-tariffs-section" ref={tariffsRef}>
         <h2 className="section-title">Доступные тарифы</h2>
         <div className="tariff-cards-grid">
-          {plans.map((plan) => (
-            <div key={plan.id} className={`tariff-plan-card ${plan.isActive ? 'active-plan' : ''}`}>
-              {plan.isActive && (
-                <div className="active-badge">Текущий тариф</div>
-              )}
-              
-              <div className="plan-image-wrapper">
-                <img src={plan.image} alt={plan.name} className="plan-image" />
-              </div>
-              
-              <div className="plan-header">
-                <h3 className="plan-name-small">{plan.displayName}</h3>
-                <div className="plan-price">
-                  <span className="price-amount">₸{formatPrice(plan.monthlyPrice)}</span>
-                </div>
-                <p className="plan-duration">{plan.duration}</p>
-              </div>
-
-              <ul className="plan-features">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="plan-feature">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              <button 
-                className={`plan-select-btn ${plan.isActive ? 'active-plan-btn' : ''}`}
-                onClick={() => handleSelectPlan(plan.id)}
-                disabled={plan.isActive}
-              >
-                {plan.isActive ? 'Активен' : 'Выбрать план'}
-                {!plan.isActive && (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
+          {plans.map((plan) => {
+            const isCurrentPlan = plan.id === userTariff.planId;
+            return (
+              <div key={plan.id} className={`tariff-plan-card ${isCurrentPlan ? 'active-plan' : ''}`}>
+                {isCurrentPlan && (
+                  <div className="active-badge">Текущий тариф</div>
                 )}
-              </button>
-            </div>
-          ))}
+
+                <div className="plan-image-wrapper">
+                  <img src={plan.image} alt={plan.name} className="plan-image" />
+                </div>
+
+                <div className="plan-header">
+                  <h3 className="plan-name-small">{plan.displayName}</h3>
+                  <div className="plan-price">
+                    <span className="price-amount">₸{formatPrice(plan.monthlyPrice)}</span>
+                  </div>
+                  <p className="plan-duration">{plan.duration}</p>
+                </div>
+
+                <ul className="plan-features">
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="plan-feature">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  className={`plan-select-btn ${isCurrentPlan ? 'active-plan-btn' : ''}`}
+                  onClick={() => handleSelectPlan(plan.id)}
+                  disabled={isCurrentPlan}
+                >
+                  {isCurrentPlan ? 'Активен' : 'Выбрать план →'}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

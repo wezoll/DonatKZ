@@ -43,7 +43,7 @@ public class AdminService {
     @Transactional
     public AdminUserDto updateUserRole(Long userId, String role) {
         log.info("Updating user {} role to {}", userId, role);
-        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
@@ -57,19 +57,20 @@ public class AdminService {
     @Transactional
     public AdminUserDto updateUserTariff(Long userId, String tariff, String tariffStart, String tariffEnd) {
         log.info("Updating user {} tariff to {} ({} - {})", userId, tariff, tariffStart, tariffEnd);
-        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
         user.setSubscriptionTier(tariff);
-        
+
         // Парсинг дат (сохраняем как LocalDateTime)
         try {
             LocalDateTime startDate = LocalDateTime.parse(tariffStart + "T00:00:00");
             LocalDateTime endDate = LocalDateTime.parse(tariffEnd + "T23:59:59");
-            
+
+            user.setSubscriptionStartAt(startDate);
             user.setSubscriptionExpiresAt(endDate);
-            
+
         } catch (Exception e) {
             throw new BadRequestException("Неверный формат даты. Используйте yyyy-MM-dd");
         }
@@ -83,7 +84,7 @@ public class AdminService {
     @Transactional
     public void deleteUser(Long userId) {
         log.info("Deleting user {}", userId);
-        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
@@ -109,7 +110,7 @@ public class AdminService {
     @Transactional
     public NewsDto createNews(NewsCreateRequest request) {
         log.info("Creating news: {}", request.getTitle());
-        
+
         News news = News.builder()
                 .type(request.getType())
                 .title(request.getTitle())
@@ -120,7 +121,7 @@ public class AdminService {
                 .build();
 
         news = newsRepository.save(news);
-        
+
         log.info("News created with ID: {}", news.getId());
         return convertToNewsDto(news);
     }
@@ -128,7 +129,7 @@ public class AdminService {
     @Transactional
     public NewsDto updateNews(Long newsId, NewsCreateRequest request) {
         log.info("Updating news {}", newsId);
-        
+
         News news = newsRepository.findById(newsId)
                 .orElseThrow(() -> new ResourceNotFoundException("Новость не найдена"));
 
@@ -140,7 +141,7 @@ public class AdminService {
         news.setIcon(request.getIcon());
 
         news = newsRepository.save(news);
-        
+
         log.info("News {} updated successfully", newsId);
         return convertToNewsDto(news);
     }
@@ -148,7 +149,7 @@ public class AdminService {
     @Transactional
     public void deleteNews(Long newsId) {
         log.info("Deleting news {}", newsId);
-        
+
         News news = newsRepository.findById(newsId)
                 .orElseThrow(() -> new ResourceNotFoundException("Новость не найдена"));
 
@@ -169,7 +170,7 @@ public class AdminService {
     @Transactional
     public FaqDto createFaq(FaqCreateRequest request) {
         log.info("Creating FAQ: {}", request.getQuestion());
-        
+
         Faq faq = Faq.builder()
                 .question(request.getQuestion())
                 .answer(request.getAnswer())
@@ -177,7 +178,7 @@ public class AdminService {
                 .build();
 
         faq = faqRepository.save(faq);
-        
+
         log.info("FAQ created with ID: {}", faq.getId());
         return convertToFaqDto(faq);
     }
@@ -185,7 +186,7 @@ public class AdminService {
     @Transactional
     public FaqDto updateFaq(Long faqId, FaqCreateRequest request) {
         log.info("Updating FAQ {}", faqId);
-        
+
         Faq faq = faqRepository.findById(faqId)
                 .orElseThrow(() -> new ResourceNotFoundException("FAQ не найден"));
 
@@ -196,7 +197,7 @@ public class AdminService {
         }
 
         faq = faqRepository.save(faq);
-        
+
         log.info("FAQ {} updated successfully", faqId);
         return convertToFaqDto(faq);
     }
@@ -204,7 +205,7 @@ public class AdminService {
     @Transactional
     public void deleteFaq(Long faqId) {
         log.info("Deleting FAQ {}", faqId);
-        
+
         Faq faq = faqRepository.findById(faqId)
                 .orElseThrow(() -> new ResourceNotFoundException("FAQ не найден"));
 
@@ -221,8 +222,12 @@ public class AdminService {
                 .email(user.getEmail())
                 .role(user.getRole() != null ? user.getRole() : "USER")
                 .tariff(user.getSubscriptionTier())
-                .tariffStart(user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate().toString() : "")
-                .tariffEnd(user.getSubscriptionExpiresAt() != null ? user.getSubscriptionExpiresAt().toLocalDate().toString() : "")
+                .tariffStart(
+                        user.getSubscriptionStartAt() != null ? user.getSubscriptionStartAt().toLocalDate().toString()
+                                : (user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate().toString() : ""))
+                .tariffEnd(user.getSubscriptionExpiresAt() != null
+                        ? user.getSubscriptionExpiresAt().toLocalDate().toString()
+                        : "")
                 .createdAt(user.getCreatedAt())
                 .build();
     }

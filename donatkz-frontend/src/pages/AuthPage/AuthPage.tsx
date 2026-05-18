@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { authApi } from '../../api/auth.api';
 import './AuthPage.css';
 import Header from '../../components/Header/Header';
 import Footer from '../../components/Footer/Footer';
@@ -15,18 +16,18 @@ interface AuthPageProps {
 }
 
 const AuthPage: React.FC<AuthPageProps> = ({
-                                               isRegister: initialIsRegister,
-                                               onBack,
-                                               onTermsClick,
-                                               onNavigateToSection
-                                           }) => {
+    isRegister: initialIsRegister,
+    onBack,
+    onTermsClick,
+    onNavigateToSection
+}) => {
     const navigate = useNavigate();
     const { login, register, error, clearError, isLoading } = useAuth();
 
     const [isRegister, setIsRegister] = useState(initialIsRegister);
     const [showPassword, setShowPassword] = useState(false);
     const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
-    const [forgotStep, setForgotStep] = useState<'email' | 'password' | null>(null);
+    const [forgotStep, setForgotStep] = useState<'email' | 'sent' | null>(null);
 
     // Уведомление о проверке email
     const [showEmailVerificationNotice, setShowEmailVerificationNotice] = useState(false);
@@ -47,10 +48,8 @@ const AuthPage: React.FC<AuthPageProps> = ({
 
     // Password reset
     const [resetEmail, setResetEmail] = useState('');
-    const [resetPassword, setResetPassword] = useState('');
-    const [resetPasswordConfirm, setResetPasswordConfirm] = useState('');
-    const [showResetPassword, setShowResetPassword] = useState(false);
-    const [showResetPasswordConfirm, setShowResetPasswordConfirm] = useState(false);
+    const [forgotLoading, setForgotLoading] = useState(false);
+    const [forgotError, setForgotError] = useState<string | null>(null);
 
     // Переключение между login/register
     const handleToggleMode = () => {
@@ -139,26 +138,27 @@ const AuthPage: React.FC<AuthPageProps> = ({
         }
     };
 
-    const handleForgotPasswordSubmit = (e: React.FormEvent) => {
+    const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (forgotStep === 'email' && resetEmail) {
-            // TODO: Отправить запрос на восстановление пароля
-            setForgotStep('password');
-        } else if (forgotStep === 'password' && resetPassword === resetPasswordConfirm && resetPassword) {
-            // TODO: Отправить новый пароль
-            alert('Пароль успешно изменен!');
-            setForgotStep(null);
-            setResetEmail('');
-            setResetPassword('');
-            setResetPasswordConfirm('');
+            setForgotLoading(true);
+            setForgotError(null);
+            try {
+                await authApi.forgotPassword(resetEmail);
+                setForgotStep('sent');
+            } catch (err: any) {
+                setForgotError(err?.response?.data?.message || 'Произошла ошибка. Попробуйте позже.');
+            } finally {
+                setForgotLoading(false);
+            }
         }
     };
 
     return (
         <>
             <Header
-                onLoginClick={() => {}}
-                onPricingClick={() => {}}
+                onLoginClick={() => { }}
+                onPricingClick={() => { }}
                 onHomeClick={onBack}
                 isAuthPage={true}
                 onNavigateToSection={onNavigateToSection}
@@ -198,7 +198,7 @@ const AuthPage: React.FC<AuthPageProps> = ({
                                 {/* Показать ошибку если есть */}
                                 {error && (
                                     <div className="error-message">
-                                         {error}
+                                        {error}
                                     </div>
                                 )}
 
@@ -424,6 +424,10 @@ const AuthPage: React.FC<AuthPageProps> = ({
                             <form className="auth-form" onSubmit={handleForgotPasswordSubmit}>
                                 <h2 className="auth-title">Восстановление пароля</h2>
 
+                                {forgotError && (
+                                    <div className="error-message">{forgotError}</div>
+                                )}
+
                                 <div className="form-group">
                                     <label>Введите ваш Email</label>
                                     <input
@@ -436,8 +440,8 @@ const AuthPage: React.FC<AuthPageProps> = ({
                                     />
                                 </div>
 
-                                <button type="submit" className="btn-auth-submit">
-                                    Продолжить
+                                <button type="submit" className="btn-auth-submit" disabled={forgotLoading}>
+                                    {forgotLoading ? 'Отправка...' : 'Отправить ссылку'}
                                 </button>
 
                                 <div className="auth-links">
@@ -445,109 +449,44 @@ const AuthPage: React.FC<AuthPageProps> = ({
                                         <button
                                             type="button"
                                             className="link-btn"
-                                            onClick={() => setForgotStep(null)}
+                                            onClick={() => { setForgotStep(null); setForgotError(null); }}
                                         >
                                             Вернуться к авторизации
                                         </button>
                                     </p>
                                 </div>
                             </form>
-                        ) : (
-                            // Форма восстановления - ввод нового пароля
-                            <form className="auth-form" onSubmit={handleForgotPasswordSubmit}>
-                                <h2 className="auth-title">Новый пароль</h2>
-
-                                <div className="form-group">
-                                    <label>Новый пароль</label>
-                                    <div className="password-input-wrapper">
-                                        <input
-                                            type={showResetPassword ? 'text' : 'password'}
-                                            className="form-input"
-                                            placeholder="Придумайте новый пароль"
-                                            value={resetPassword}
-                                            onChange={(e) => setResetPassword(e.target.value)}
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            className="password-toggle"
-                                            onClick={() => setShowResetPassword(!showResetPassword)}
-                                        >
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                {showResetPassword ? (
-                                                    <>
-                                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                                        <circle cx="12" cy="12" r="3"></circle>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                                        <line x1="1" y1="1" x2="23" y2="23"></line>
-                                                    </>
-                                                )}
-                                            </svg>
-                                        </button>
+                        ) : forgotStep === 'sent' ? (
+                            // Подтверждение отправки
+                            <div className="auth-form">
+                                <h2 className="auth-title">Письмо отправлено</h2>
+                                <div className="email-verification-notice">
+                                    <div className="email-verification-notice-content">
+                                        <div className="email-verification-notice-icon">✉️</div>
+                                        <div className="email-verification-notice-text">
+                                            <h3 className="email-verification-notice-title">Проверьте вашу почту!</h3>
+                                            <p className="email-verification-notice-description">
+                                                Если email <strong>{resetEmail}</strong> зарегистрирован, мы отправили ссылку для сброса пароля.
+                                            </p>
+                                            <p className="email-verification-notice-tip">
+                                                🔗 Ссылка действительна 1 час. Перейдите по ней и установите новый пароль.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-
-                                <div className="form-group">
-                                    <label>Подтвердите пароль</label>
-                                    <div className="password-input-wrapper">
-                                        <input
-                                            type={showResetPasswordConfirm ? 'text' : 'password'}
-                                            className="form-input"
-                                            placeholder="Подтвердите пароль"
-                                            value={resetPasswordConfirm}
-                                            onChange={(e) => setResetPasswordConfirm(e.target.value)}
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            className="password-toggle"
-                                            onClick={() => setShowResetPasswordConfirm(!showResetPasswordConfirm)}
-                                        >
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                {showResetPasswordConfirm ? (
-                                                    <>
-                                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                                        <circle cx="12" cy="12" r="3"></circle>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                                        <line x1="1" y1="1" x2="23" y2="23"></line>
-                                                    </>
-                                                )}
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {resetPassword && resetPasswordConfirm && resetPassword !== resetPasswordConfirm && (
-                                    <p className="error-message">Пароли не совпадают</p>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    className="btn-auth-submit"
-                                    disabled={!resetPassword || !resetPasswordConfirm || resetPassword !== resetPasswordConfirm}
-                                >
-                                    Изменить пароль
-                                </button>
-
-                                <div className="auth-links">
+                                <div className="auth-links" style={{ marginTop: '16px' }}>
                                     <p>
                                         <button
                                             type="button"
                                             className="link-btn"
-                                            onClick={() => setForgotStep(null)}
+                                            onClick={() => { setForgotStep(null); setResetEmail(''); setForgotError(null); }}
                                         >
                                             Вернуться к авторизации
                                         </button>
                                     </p>
                                 </div>
-                            </form>
-                        )}
+                            </div>
+                        ) : null}
                     </div>
                 </div>
             </div>

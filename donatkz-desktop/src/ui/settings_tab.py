@@ -5,6 +5,7 @@ import logging
 import json
 import sys
 from pathlib import Path
+from voice.voice_manager import VOICES, DEFAULT_VOICE
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -32,7 +33,7 @@ class SettingsTab:
     - Лимиты донатов
     """
     
-    def __init__(self, parent):
+    def __init__(self, parent, pipeline=None):
         """
         Инициализация Settings
         
@@ -41,6 +42,7 @@ class SettingsTab:
         """
         self.frame = ttk.Frame(parent)
         self.current_api_url = None
+        self._pipeline = pipeline  # Ссылка на pipeline для reload_voice_settings
         
         # Создаём прокручиваемый canvas для настроек
         self._create_scrollable_frame()
@@ -48,6 +50,7 @@ class SettingsTab:
         # Создаём секции настроек
         self._create_connection_section()
         self._create_notifications_section()
+        self._create_voice_section()
         self._create_donations_section()
         self._create_actions_section()
         
@@ -132,6 +135,93 @@ class SettingsTab:
             font=("Segoe UI", 9)
         )
         self.connection_status.pack(anchor=tk.W, pady=5)
+    
+    def _create_voice_section(self):
+        """Создание секции озвучки TTS"""
+        header = ttk.Label(
+            self.scrollable_frame,
+            text="🎤 Озвучка",
+            font=("Segoe UI", 12, "bold")
+        )
+        header.pack(anchor=tk.W, padx=10, pady=(10, 5))
+        
+        frame = ttk.LabelFrame(self.scrollable_frame, text="", padding=10)
+        frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        # Включить озвучку
+        self.voice_enabled_check = LabeledCheckbutton(
+            frame,
+            label_text="🔊 Включить озвучку донатов",
+            default=False
+        )
+        self.voice_enabled_check.pack(fill=tk.X, pady=2)
+        
+        # Голос
+        voice_row = ttk.Frame(frame)
+        voice_row.pack(fill=tk.X, pady=5)
+        ttk.Label(voice_row, text="Голос:", width=20).pack(side=tk.LEFT)
+        self.voice_var = tk.StringVar(value=DEFAULT_VOICE)
+        voice_names = list(VOICES.values())
+        voice_keys = list(VOICES.keys())
+        self._voice_keys = voice_keys  # для маппинга
+        self.voice_combo = ttk.Combobox(
+            voice_row,
+            values=voice_names,
+            state="readonly",
+            width=30
+        )
+        self.voice_combo.current(0)
+        self.voice_combo.pack(side=tk.LEFT, padx=5)
+        
+        # Громкость
+        vol_row = ttk.Frame(frame)
+        vol_row.pack(fill=tk.X, pady=5)
+        ttk.Label(vol_row, text="Громкость:", width=20).pack(side=tk.LEFT)
+        self.voice_volume_var = tk.DoubleVar(value=0.8)
+        vol_slider = ttk.Scale(
+            vol_row,
+            from_=0.0, to=1.0,
+            orient=tk.HORIZONTAL,
+            variable=self.voice_volume_var,
+            length=180
+        )
+        vol_slider.pack(side=tk.LEFT, padx=5)
+        self.vol_label = ttk.Label(vol_row, text="80%", width=5)
+        self.vol_label.pack(side=tk.LEFT)
+        vol_slider.bind("<Motion>", lambda e: self.vol_label.config(text=f"{int(self.voice_volume_var.get()*100)}%"))
+        vol_slider.bind("<ButtonRelease-1>", lambda e: self.vol_label.config(text=f"{int(self.voice_volume_var.get()*100)}%"))
+        
+        # Мин. сумма
+        min_row = ttk.Frame(frame)
+        min_row.pack(fill=tk.X, pady=5)
+        ttk.Label(min_row, text="Озвучивать от:", width=20).pack(side=tk.LEFT)
+        self.voice_min_amount_entry = ttk.Entry(min_row, width=10)
+        self.voice_min_amount_entry.insert(0, "0")
+        self.voice_min_amount_entry.pack(side=tk.LEFT, padx=5)
+        ttk.Label(min_row, text="₸").pack(side=tk.LEFT)
+        
+        # Кнопка теста
+        test_btn = ttk.Button(
+            frame,
+            text="🔊 Тест голоса",
+            command=self._test_voice
+        )
+        test_btn.pack(anchor=tk.W, pady=(5, 2))
+    
+    def _test_voice(self):
+        """Тест голосовой озвучки"""
+        try:
+            from voice.voice_manager import VoiceManager
+            vm = VoiceManager()
+            idx = self.voice_combo.current()
+            voice_key = self._voice_keys[idx] if idx >= 0 else DEFAULT_VOICE
+            vm.set_voice(voice_key)
+            vm.set_volume(self.voice_volume_var.get())
+            vm.set_enabled(True)
+            vm.speak("Привет, это тестовое сообщение голосовой озвучки!")
+        except Exception as e:
+            from .widgets import show_error
+            show_error("Ошибка", f"Не удалось запустить озвучку: {e}")
     
     def _create_notifications_section(self):
         """Создание секции уведомлений"""
@@ -253,6 +343,17 @@ class SettingsTab:
             self.sound_check.set(settings.get("sound_enabled", True))
             self.popup_check.set(settings.get("popup_enabled", True))
             
+            # Настройки озвучки
+            self.voice_enabled_check.set(settings.get("voice_enabled", False))
+            voice_key = settings.get("voice_voice", DEFAULT_VOICE)
+            if voice_key in self._voice_keys:
+                self.voice_combo.current(self._voice_keys.index(voice_key))
+            volume = settings.get("voice_volume", 0.8)
+            self.voice_volume_var.set(volume)
+            self.vol_label.config(text=f"{int(volume * 100)}%")
+            self.voice_min_amount_entry.delete(0, tk.END)
+            self.voice_min_amount_entry.insert(0, str(settings.get("voice_min_amount", 0)))
+            
             self.min_amount_entry.delete(0, tk.END)
             self.min_amount_entry.insert(0, str(settings.get("min_amount", Config.MIN_DONATION_AMOUNT)))
             
@@ -297,7 +398,12 @@ class SettingsTab:
                 "sound_enabled": self.sound_check.get(),
                 "popup_enabled": self.popup_check.get(),
                 "min_amount": min_amount,
-                "max_amount": max_amount
+                "max_amount": max_amount,
+                # Озвучка
+                "voice_enabled": self.voice_enabled_check.get(),
+                "voice_voice": self._voice_keys[self.voice_combo.current()],
+                "voice_volume": round(self.voice_volume_var.get(), 2),
+                "voice_min_amount": int(self.voice_min_amount_entry.get() or 0),
             }
             
             # Сохраняем в файл
@@ -310,6 +416,10 @@ class SettingsTab:
             # Обновляем текущий API URL и индикатор
             self.current_api_url = self.api_url_entry.get()
             self.api_update_indicator.config(text="✅", foreground="green")
+            
+            # Перезагружаем настройки озвучки в pipeline
+            if self._pipeline:
+                self._pipeline.reload_voice_settings()
             
             show_info("Успешно", "Настройки сохранены и обновлены!")
             

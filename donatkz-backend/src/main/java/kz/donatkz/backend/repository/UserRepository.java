@@ -16,9 +16,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Существующие методы (должны уже быть):
     Optional<User> findByUsername(String username);
+
     Optional<User> findByEmail(String email);
+
     Optional<User> findByVerificationToken(String token);
+
     boolean existsByUsername(String username);
+
     boolean existsByEmail(String email);
 
     // ========== НОВЫЙ МЕТОД ==========
@@ -28,4 +32,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * Используется для подключения к WebSocket каналу донатов
      */
     Optional<User> findByWebsocketApiKey(String websocketApiKey);
+
+    Optional<User> findByResetPasswordToken(String token);
 }

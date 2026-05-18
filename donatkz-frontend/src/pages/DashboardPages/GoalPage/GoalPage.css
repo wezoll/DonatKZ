@@ -22,7 +22,7 @@
 
 .add-goal-btn {
   background-color: #88b702;
-  color: #1a1a1a;
+  color: #FFF;
   border: none;
   padding: 14px 24px;
   border-radius: 12px;
@@ -68,7 +68,7 @@
 
 .add-goal-btn-empty {
   background-color: #88b702;
-  color: #1a1a1a;
+  color: #FFF;
   border: none;
   padding: 14px 28px;
   border-radius: 12px;
@@ -263,16 +263,14 @@
 
 .progress-fill-animated {
   background-color: #88b702;
-  background-image: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.15) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.15) 50%,
-    rgba(255, 255, 255, 0.15) 75%,
-    transparent 75%,
-    transparent
-  );
+  background-image: linear-gradient(45deg,
+      rgba(255, 255, 255, 0.15) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.15) 50%,
+      rgba(255, 255, 255, 0.15) 75%,
+      transparent 75%,
+      transparent);
   background-size: 30px 30px;
   animation: progress-animation 1s linear infinite;
 }
@@ -281,6 +279,7 @@
   0% {
     background-position: 0 0;
   }
+
   100% {
     background-position: 30px 30px;
   }
@@ -741,11 +740,11 @@
   border-radius: 50%;
 }
 
-input:checked + .toggle-slider {
+input:checked+.toggle-slider {
   background-color: #88b702;
 }
 
-input:checked + .toggle-slider:before {
+input:checked+.toggle-slider:before {
   transform: translateX(22px);
 }
 
@@ -858,7 +857,7 @@ input:checked + .toggle-slider:before {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background-image: 
+  background-image:
     linear-gradient(45deg, #252525 25%, transparent 25%),
     linear-gradient(-45deg, #252525 25%, transparent 25%),
     linear-gradient(45deg, transparent 75%, #252525 75%),
@@ -1030,7 +1029,7 @@ input:checked + .toggle-slider:before {
   .widget-editor-layout {
     grid-template-columns: 1fr;
   }
-  
+
   .editor-sidebar {
     border-right: none;
     border-bottom: 1px solid #252525;

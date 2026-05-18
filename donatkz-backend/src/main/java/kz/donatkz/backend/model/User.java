@@ -52,6 +52,14 @@ public class User {
     @Column(name = "verification_token_expires_at")
     private LocalDateTime verificationTokenExpiresAt;
 
+    // ========== PASSWORD RESET ==========
+
+    @Column(name = "reset_password_token")
+    private String resetPasswordToken;
+
+    @Column(name = "reset_password_token_expires_at")
+    private LocalDateTime resetPasswordTokenExpiresAt;
+
     // ========== SUBSCRIPTION FIELDS ==========
 
     @Column(name = "subscription_tier")
@@ -60,11 +68,15 @@ public class User {
     @Column(name = "subscription_expires_at")
     private LocalDateTime subscriptionExpiresAt; // Когда истекает подписка (NULL для FREE)
 
+    @Column(name = "subscription_start_at")
+    private LocalDateTime subscriptionStartAt; // Когда началась текущая подписка
+
     @Column(name = "is_subscription_active")
     private Boolean isSubscriptionActive = true; // Активна ли подписка
 
     @Column(name = "monthly_donation_limit")
-    private Integer monthlyDonationLimit = 100; // Лимит донатов в месяц (для FREE = 100, для BASIC/PREMIUM = NULL/unlimited)
+    private Integer monthlyDonationLimit = 100; // Лимит донатов в месяц (для FREE = 100, для BASIC/PREMIUM =
+                                                // NULL/unlimited)
 
     @Column(name = "current_month_donations")
     private Integer currentMonthDonations = 0; // Счетчик донатов в текущем месяце

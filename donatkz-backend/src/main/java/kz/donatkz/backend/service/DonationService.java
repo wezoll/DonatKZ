@@ -57,8 +57,7 @@ public class DonationService {
                 userId,
                 request.getAmount(),
                 request.getSenderName(),
-                request.getTimestamp()
-        );
+                request.getTimestamp());
 
         if (deduplicationService.isDuplicate(hash)) {
             log.warn("Duplicate donation detected: hash={}", hash);
@@ -138,9 +137,9 @@ public class DonationService {
      */
     public List<DonationResponse> getLargestDonations(Long userId, String period, int limit) {
         log.info("Fetching largest donations for user: {}, period: {}, limit: {}", userId, period, limit);
-        
+
         Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "amount"));
-        
+
         Page<Donation> donations;
         if ("all-time".equals(period)) {
             donations = donationRepository.findByUserIdOrderByAmountDesc(userId, pageable);
@@ -151,7 +150,8 @@ public class DonationService {
                     startDate = LocalDate.now().atStartOfDay();
                     break;
                 case "week":
-                    startDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)).atStartOfDay();
+                    startDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
+                            .atStartOfDay();
                     break;
                 case "month":
                     startDate = LocalDate.now().withDayOfMonth(1).atStartOfDay();
@@ -162,13 +162,12 @@ public class DonationService {
                 default:
                     startDate = LocalDate.now().minusMonths(1).atStartOfDay();
             }
-            
+
             LocalDateTime endDate = LocalDateTime.now();
             donations = donationRepository.findByUserIdAndCreatedAtBetweenOrderByAmountDesc(
-                    userId, startDate, endDate, pageable
-            );
+                    userId, startDate, endDate, pageable);
         }
-        
+
         return donations.getContent().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -188,19 +187,18 @@ public class DonationService {
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
         LocalDateTime todayEnd = LocalDate.now().atTime(LocalTime.MAX);
         List<Donation> todayDonations = donationRepository.findByUserIdAndCreatedAtBetweenOrderByCreatedAtDesc(
-                userId, todayStart, todayEnd
-        );
+                userId, todayStart, todayEnd);
         Long countToday = (long) todayDonations.size();
         BigDecimal amountToday = todayDonations.stream()
                 .map(Donation::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Статистика за неделю
-        LocalDateTime weekStart = LocalDate.now().with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)).atStartOfDay();
+        LocalDateTime weekStart = LocalDate.now().with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
+                .atStartOfDay();
         LocalDateTime weekEnd = LocalDateTime.now();
         List<Donation> weekDonations = donationRepository.findByUserIdAndCreatedAtBetweenOrderByCreatedAtDesc(
-                userId, weekStart, weekEnd
-        );
+                userId, weekStart, weekEnd);
         Long countThisWeek = (long) weekDonations.size();
         BigDecimal amountThisWeek = weekDonations.stream()
                 .map(Donation::getAmount)
@@ -210,8 +208,7 @@ public class DonationService {
         LocalDateTime monthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
         LocalDateTime monthEnd = LocalDateTime.now();
         List<Donation> monthDonations = donationRepository.findByUserIdAndCreatedAtBetweenOrderByCreatedAtDesc(
-                userId, monthStart, monthEnd
-        );
+                userId, monthStart, monthEnd);
         Long countThisMonth = (long) monthDonations.size();
         BigDecimal amountThisMonth = monthDonations.stream()
                 .map(Donation::getAmount)
@@ -246,7 +243,8 @@ public class DonationService {
                 break;
 
             case "WEEK":
-                LocalDateTime weekStart = LocalDate.now().with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)).atStartOfDay();
+                LocalDateTime weekStart = LocalDate.now()
+                        .with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)).atStartOfDay();
                 LocalDateTime weekEnd = LocalDateTime.now();
                 results = donationRepository.getTopDonorsByUserIdAndPeriod(userId, weekStart, weekEnd, pageable);
                 break;

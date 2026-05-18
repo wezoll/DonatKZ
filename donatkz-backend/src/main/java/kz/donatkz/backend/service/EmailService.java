@@ -73,4 +73,29 @@ public class EmailService {
             log.error("Failed to send welcome email to: {}", to, e);
         }
     }
+
+    public void sendPasswordResetEmail(String to, String username, String token) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject("Сброс пароля DonatKZ");
+
+            Context context = new Context();
+            context.setVariable("username", username);
+            context.setVariable("resetLink", frontendUrl + "/reset-password?token=" + token);
+
+            String htmlContent = templateEngine.process("reset-password-email", context);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            log.info("Password reset email sent to: {}", to);
+
+        } catch (MessagingException e) {
+            log.error("Failed to send password reset email to: {}", to, e);
+            throw new RuntimeException("Не удалось отправить письмо: " + e.getMessage());
+        }
+    }
 }

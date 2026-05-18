@@ -32,6 +32,7 @@ export interface User {
     kaspiPhone: string | null;
     role: 'USER' | 'ADMIN' | 'SUPERADMIN';
     subscriptionTier: 'FREE' | 'BASIC' | 'PREMIUM';
+    subscriptionStartAt: string | null;
     subscriptionExpiresAt: string | null;
     isSubscriptionActive: boolean;
     currentMonthDonations: number;

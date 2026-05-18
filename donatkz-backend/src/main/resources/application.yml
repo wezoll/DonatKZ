@@ -25,8 +25,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: wezoll963@gmail.com        # Твой Gmail
-    password: eghn yndu gfod nslj         # Код из 16 символов (убери пробелы или оставь)
+    username: wezoll963@gmail.com   
+    password: yhgd rjxu whhc inbf
     properties:
       mail:
         smtp:
@@ -49,7 +49,7 @@ cors:
   allowed-origins: http://localhost:3000,http://localhost:5173
 
 app:
-  frontend-url: http://localhost:8080/api/auth
+  frontend-url: http://localhost:5173
   verification-token-expiration: 86400000
 
 logging:

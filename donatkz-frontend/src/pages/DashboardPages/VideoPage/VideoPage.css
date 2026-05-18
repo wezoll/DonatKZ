@@ -1,0 +1,427 @@
+/* ===== PAGE ===== */
+.video-page {
+    padding: 30px;
+    background-color: #1a1a1a;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* ===== HEADER ===== */
+.video-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+}
+
+.video-page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 6px 0;
+}
+
+.video-page-subtitle {
+    font-size: 14px;
+    color: #888;
+    margin: 0;
+}
+
+/* ===== CONTAINER ===== */
+.video-settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ===== CARD ===== */
+.video-card {
+    background-color: #1c1c1c;
+    border: 1px solid #252525;
+    border-radius: 16px;
+    padding: 30px;
+    transition: all 0.3s ease;
+}
+
+.video-card:hover {
+    border-color: #88b702;
+    box-shadow: 0 8px 24px rgba(136, 183, 2, 0.1);
+}
+
+.video-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.video-card-info {
+    flex: 1;
+}
+
+.video-card-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 8px 0;
+}
+
+.video-card-description {
+    font-size: 14px;
+    color: #888;
+    margin: 0 0 20px 0;
+    line-height: 1.5;
+}
+
+/* ===== TOGGLE (uses NotificationsPage classes) ===== */
+.notification-toggle {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.notification-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.notification-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #2a2a2a;
+    transition: 0.3s;
+    border-radius: 28px;
+}
+
+.notification-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.notification-toggle input:checked+.notification-toggle-slider {
+    background-color: #88b702;
+}
+
+.notification-toggle input:checked+.notification-toggle-slider:before {
+    transform: translateX(22px);
+}
+
+/* ===== PRESET BUTTONS ===== */
+.video-amount-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.video-preset-btn {
+    padding: 10px 20px;
+    background: #252525;
+    border: 2px solid #2a2a2a;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.video-preset-btn:hover {
+    border-color: #88b702;
+    background: #2a2a2a;
+}
+
+.video-preset-btn.active {
+    border-color: #88b702;
+    background: rgba(136, 183, 2, 0.1);
+    color: #88b702;
+}
+
+/* ===== CUSTOM AMOUNT ===== */
+.video-custom-amount {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ===== FORM ===== */
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-label-sm {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #888;
+    margin-bottom: 6px;
+}
+
+.form-input {
+    width: 100%;
+    background-color: #252525;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 15px;
+    color: #fff;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #88b702;
+    background-color: #2a2a2a;
+}
+
+.form-input-sm {
+    padding: 10px 12px;
+    font-size: 14px;
+}
+
+/* ===== RANGE ===== */
+.video-range-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.video-range-full {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.setting-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: #252525;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+.setting-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #88b702 0%, #a3d403 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.setting-range::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.setting-range::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #88b702 0%, #a3d403 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+.setting-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: #88b702;
+    background: #252525;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+/* ===== SOURCES ===== */
+.video-sources-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.video-source-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: #252525;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.video-source-item:hover {
+    border-color: #333;
+}
+
+.video-source-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+}
+
+/* ===== SETTINGS ROWS ===== */
+.video-settings-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.video-setting-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #252525;
+}
+
+.video-setting-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.video-setting-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.video-setting-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.video-setting-hint {
+    font-size: 12px;
+    color: #666;
+    display: none;
+}
+
+.video-setting-info+.notification-toggle {
+    align-self: flex-end;
+}
+
+/* Make moderation row horizontal */
+.video-setting-row:first-child {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.video-setting-row:first-child .video-setting-info {
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.video-setting-row:first-child .video-setting-hint {
+    display: block;
+}
+
+/* ===== SIZE INPUTS ===== */
+.video-size-inputs {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.video-size-field {
+    flex: 1;
+}
+
+.video-size-x {
+    font-size: 18px;
+    font-weight: 700;
+    color: #666;
+    padding-bottom: 12px;
+}
+
+/* ===== URL ===== */
+.btn-toggle-url {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #252525;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-toggle-url:hover {
+    background: #2a2a2a;
+    border-color: #88b702;
+}
+
+.widget-url-container {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.widget-url-input {
+    flex: 1;
+    padding: 10px 12px;
+    background: #0f0f0f;
+    border: 1px solid #252525;
+    border-radius: 8px;
+    color: #888;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+}
+
+.widget-copy-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #88b702;
+    color: #1a1a1a;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.widget-copy-btn:hover {
+    background: #a3d403;
+}
+
+.widget-copy-btn.copied {
+    background: #10b981;
+}

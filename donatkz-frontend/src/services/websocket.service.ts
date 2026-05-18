@@ -60,7 +60,7 @@ class WebSocketService {
   connect(apiKey: string, onDonation: DonationCallback, onError?: (error: any) => void): void {
     // URL WebSocket endpoint (SockJS использует HTTP, не WS!)
     const wsUrl = import.meta.env.VITE_WS_URL || 'http://localhost:8080/ws';
-    
+
     if (import.meta.env.DEV) {
       console.log('🔌 Connecting to WebSocket:', wsUrl);
       console.log('🔑 API Key:', apiKey.substring(0, 8) + '...');
@@ -72,9 +72,9 @@ class WebSocketService {
     // Создаем STOMP клиент
     this.client = new Client({
       webSocketFactory: () => socket as any,
-      
+
       connectHeaders: {},
-      
+
       debug: (str) => {
         if (import.meta.env.DEV) {
           console.log('📡 STOMP:', str);
@@ -90,7 +90,7 @@ class WebSocketService {
           console.log('✅ WebSocket connected!');
         }
         this.reconnectAttempts = 0;
-        
+
         // Подписываемся на topic с донатами
         const topic = `/topic/donations/${apiKey}`;
         if (import.meta.env.DEV) {
@@ -156,7 +156,7 @@ class WebSocketService {
       if (import.meta.env.DEV) {
         console.log(`🔄 Reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}...`);
       }
-      
+
       setTimeout(() => {
         this.connect(apiKey, onDonation, onError);
       }, this.reconnectDelay);

@@ -24,6 +24,7 @@ from utils.deduplication import DeduplicationManager
 from database.db_manager import DatabaseManager
 from api import create_api_client
 from config import Config
+from voice.voice_manager import VoiceManager
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +88,31 @@ class DonationPipeline:
         self.is_processing = False
         self.processing_thread = None
         
+        # Голосовая озвучка
+        self.voice_manager = VoiceManager()
+        self._load_voice_settings()
+        
         logger.info("DonationPipeline инициализирован с DatabaseManager")
+    
+    def _load_voice_settings(self):
+        """Загрузка настроек озвучки из settings.json"""
+        try:
+            import json
+            settings_file = Config.SETTINGS_FILE
+            if settings_file.exists():
+                with open(settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                self.voice_manager.set_enabled(settings.get("voice_enabled", False))
+                self.voice_manager.set_voice(settings.get("voice_voice", "ru-RU-SvetlanaNeural"))
+                self.voice_manager.set_volume(settings.get("voice_volume", 0.8))
+                self.voice_manager.set_min_amount(settings.get("voice_min_amount", 0))
+                logger.info("✅ Настройки озвучки загружены")
+        except Exception as e:
+            logger.warning(f"Не удалось загрузить настройки озвучки: {e}")
+    
+    def reload_voice_settings(self):
+        """Перезагрузить настройки озвучки (вызывается после сохранения в UI)"""
+        self._load_voice_settings()
     
     async def initialize_api(self, email: str = None, password: str = None):
         """
@@ -258,6 +283,14 @@ class DonationPipeline:
                     # Не прерываем обработку из-за ошибки GUI
             else:
                 logger.warning("⚠️ GUI callback не установлен!")
+            
+            # Шаг 8: Голосовая озвучка (только если есть сообщение)
+            if self.voice_manager.is_enabled() and donation.message and donation.message.strip():
+                try:
+                    self.voice_manager.speak(donation.message.strip(), amount=int(donation.amount))
+                    logger.info(f"🔊 Озвучиваем сообщение: {donation.message[:50]}")
+                except Exception as voice_error:
+                    logger.error(f"❌ Ошибка озвучки: {voice_error}")
             
         except Exception as e:
             logger.exception(f"❌ Ошибка обработки уведомления: {e}")

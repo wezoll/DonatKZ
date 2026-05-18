@@ -57,8 +57,7 @@ public class AuthService {
         user.setIsEmailVerified(false);
         user.setVerificationToken(verificationToken);
         user.setVerificationTokenExpiresAt(
-                LocalDateTime.now().plusSeconds(verificationTokenExpiration / 1000)
-        );
+                LocalDateTime.now().plusSeconds(verificationTokenExpiration / 1000));
         user.setSubscriptionTier("FREE");
 
         User savedUser = userRepository.save(user);
@@ -68,8 +67,7 @@ public class AuthService {
             emailService.sendVerificationEmail(
                     savedUser.getEmail(),
                     savedUser.getUsername(),
-                    verificationToken
-            );
+                    verificationToken);
         } catch (Exception e) {
             // Логируем ошибку, но не прерываем регистрацию
             System.err.println("Failed to send verification email: " + e.getMessage());
@@ -82,8 +80,7 @@ public class AuthService {
         return new AuthResponse(
                 accessToken,
                 refreshToken,
-                mapToDto(savedUser)
-        );
+                mapToDto(savedUser));
     }
 
     @Transactional
@@ -126,7 +123,8 @@ public class AuthService {
             throw new BadCredentialsException("Неверный логин или пароль");
         }
 
-        // Проверка верификации email (можно отключить, если хотите разрешить логин без верификации)
+        // Проверка верификации email (можно отключить, если хотите разрешить логин без
+        // верификации)
         if (!user.getIsEmailVerified()) {
             throw new RuntimeException("Email не подтвержден. Проверьте почту.");
         }
@@ -143,8 +141,7 @@ public class AuthService {
         return new AuthResponse(
                 accessToken,
                 refreshToken,
-                mapToDto(user)
-        );
+                mapToDto(user));
     }
 
     @Transactional(readOnly = true)
@@ -164,8 +161,7 @@ public class AuthService {
         return new AuthResponse(
                 newAccessToken,
                 newRefreshToken,
-                mapToDto(user)
-        );
+                mapToDto(user));
     }
 
     @Transactional(readOnly = true)
@@ -175,9 +171,48 @@ public class AuthService {
         return mapToDto(user);
     }
 
+    @Transactional
+    public String requestPasswordReset(String email) {
+        // Не раскрываем существует ли email (защита от email enumeration)
+        userRepository.findByEmail(email).ifPresent(user -> {
+            String token = UUID.randomUUID().toString();
+            user.setResetPasswordToken(token);
+            user.setResetPasswordTokenExpiresAt(LocalDateTime.now().plusHours(1));
+            userRepository.save(user);
 
+            try {
+                emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), token);
+            } catch (Exception e) {
+                System.err.println("Failed to send reset email: " + e.getMessage());
+            }
+        });
+        return "Если такой email зарегистрирован, мы отправили инструкцию по сбросу пароля.";
+    }
 
-    // Маппинг User -> UserDto
+    @Transactional
+    public String resetPassword(String token, String newPassword, String confirmPassword) {
+        if (!newPassword.equals(confirmPassword)) {
+            throw new RuntimeException("Пароли не совпадают");
+        }
+
+        User user = userRepository.findByResetPasswordToken(token)
+                .orElseThrow(() -> new RuntimeException("Недействительный или устаревший токен"));
+
+        if (user.getResetPasswordTokenExpiresAt().isBefore(LocalDateTime.now())) {
+            user.setResetPasswordToken(null);
+            user.setResetPasswordTokenExpiresAt(null);
+            userRepository.save(user);
+            throw new RuntimeException("Ссылка сброса пароля устарела. Запросите новую.");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setResetPasswordToken(null);
+        user.setResetPasswordTokenExpiresAt(null);
+        userRepository.save(user);
+
+        return "Пароль успешно изменён";
+    }
+
     private UserDto mapToDto(User user) {
         UserDto dto = new UserDto();
         dto.setId(user.getId());

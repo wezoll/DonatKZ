@@ -31,17 +31,17 @@ public class DonationWebSocketService {
      * Frontend подписывается на: /topic/donations/{apiKey}
      *
      * @param donation - информация о донате
-     * @param user - пользователь (получатель доната)
-     * @param apiKey - WebSocket API Key пользователя
+     * @param user     - пользователь (получатель доната)
+     * @param apiKey   - WebSocket API Key пользователя
      */
     public void sendNewDonationNotification(DonationResponse donation, User user, String apiKey) {
         try {
             // Найти подходящее уведомление по сумме доната
-            Optional<NotificationSettingsDto> notificationSettings = 
-                    notificationMatcherService.findMatchingNotification(user, donation.getAmount());
+            Optional<NotificationSettingsDto> notificationSettings = notificationMatcherService
+                    .findMatchingNotification(user, donation.getAmount());
 
             if (notificationSettings.isEmpty()) {
-                log.warn("No matching notification found for donation amount: {} (user: {})", 
+                log.warn("No matching notification found for donation amount: {} (user: {})",
                         donation.getAmount(), user.getUsername());
                 // Можно отправить с дефолтными настройками или не отправлять вообще
                 // Пока не отправляем
@@ -57,8 +57,8 @@ public class DonationWebSocketService {
                     .type("NEW_DONATION")
                     .donationId(donation.getId())
                     .amount(donation.getAmount())
-                    .senderName(moderatedSenderName)  // ✅ Отфильтрованное имя
-                    .message(moderatedMessage)        // ✅ Отфильтрованное сообщение
+                    .senderName(moderatedSenderName) // ✅ Отфильтрованное имя
+                    .message(moderatedMessage) // ✅ Отфильтрованное сообщение
                     .timestamp(donation.getTimestamp())
                     .voiceEnabled(donation.getVoiceEnabled())
                     .formattedAmount(donation.getAmount() + " ₸")
